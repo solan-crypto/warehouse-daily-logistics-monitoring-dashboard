@@ -44,6 +44,54 @@ function loadedRow(r){const d=gregorianToEthiopian(String(r.activity_date||"").s
 function offloadedRow(r){const d=gregorianToEthiopian(String(r.activity_date||"").substring(0,10));return`<tr><td>${escapeHtml(d||"-")}</td><td><span class="badge offloaded-badge">Offloaded</span></td><td>-</td><td>-</td><td>${escapeHtml(r.vehicle||"-")}</td><td>${escapeHtml(Number(r.vehicle_count)||0)}</td><td>-</td><td>${escapeHtml(r.source_origin||"-")}</td><td>${escapeHtml(r.mode_of_transport||"-")}</td><td>${escapeHtml(r.bill_of_loading_awb||"-")}</td><td>${escapeHtml(r.inbound_number||"-")}</td><td>${escapeHtml(r.items||"-")}</td><td>${escapeHtml(r.challenges||"-")}</td>${adminLoggedIn?`<td>${actionButtons(r.id,"offloaded")}</td>`:""}</tr>`}
 function offloadedSearchRow(r){const d=gregorianToEthiopian(String(r.activity_date||"").substring(0,10));return`<tr><td>${escapeHtml(d||"-")}</td><td>${escapeHtml(r.source_origin||"-")}</td><td>${escapeHtml(r.mode_of_transport||"-")}</td><td>${escapeHtml(r.vehicle||"-")}</td><td>${escapeHtml(Number(r.vehicle_count)||0)}</td><td>${escapeHtml(r.bill_of_loading_awb||"-")}</td><td>${escapeHtml(r.inbound_number||"-")}</td><td>${escapeHtml(r.items||"-")}</td><td>${escapeHtml(r.challenges||"-")}</td>${adminLoggedIn?`<td>${actionButtons(r.id,"offloaded")}</td>`:""}</tr>`}
 async function loadRecentActivity(){const body=document.getElementById("recentActivity"),span=adminLoggedIn?14:13,today=getTodayEthiopian(),from=ethiopianToGregorian(addEthiopianDays(today,-6)),to=addGregorianDays(ethiopianToGregorian(today),1);body.innerHTML=`<tr><td colspan="${span}" style="text-align:center">Loading recent activities...</td></tr>`;try{const[{data:ld,error:le},{data:od,error:oe}]=await Promise.all([supabaseClient.from("warehouse_activities").select("*").gte("activity_date",from).lt("activity_date",to),supabaseClient.from("offloaded_activities").select("*").gte("activity_date",from).lt("activity_date",to)]);if(le)throw le;if(oe)throw oe;const all=[...(ld||[]).map(r=>({...r,_type:"loaded"})),...(od||[]).map(r=>({...r,_type:"offloaded"}))].sort((a,b)=>String(b.activity_date).localeCompare(String(a.activity_date))||String(b.created_at).localeCompare(String(a.created_at)));body.innerHTML=all.length?all.map(r=>r._type==="offloaded"?offloadedRow(r):loadedRow(r)).join(""):`<tr><td colspan="${span}" style="text-align:center;padding:25px">No activity recorded in the last 7 days.</td></tr>`}catch(e){body.innerHTML=`<tr><td colspan="${span}" style="text-align:center;color:#a51d1d;padding:25px">Error loading recent activity: ${escapeHtml(e.message)}</td></tr>`}}
+async function loadCurrentUserProfile() {
+  const { data: sessionData, error: sessionError } =
+    await supabaseClient.auth.getSession();
+
+  if (sessionError) throw sessionError;
+
+  const user = sessionData?.session?.user;
+
+  // No logged-in user
+  if (!user) {
+    currentUser = null;
+    currentUserProfile = null;
+    currentWarehouse = null;
+    return null;
+  }
+
+  currentUser = user;
+
+  const { data: profile, error: profileError } =
+    await supabaseClient
+      .from("profiles")
+      .select(`
+        id,
+        full_name,
+        role,
+        warehouse_id,
+        is_active,
+        warehouses (
+          id,
+          warehouse_name
+        )
+      `)
+      .eq("id", user.id)
+      .single();
+
+  if (profileError) throw profileError;
+
+  // Prevent inactive users
+  if (!profile.is_active) {
+    await supabaseClient.auth.signOut();
+    throw new Error("Your account has been deactivated.");
+  }
+
+  currentUserProfile = profile;
+  currentWarehouse = profile.warehouses || null;
+
+  return profile;
+}
 async function loadTotals(){const[{data:ld,error:le},{data:od,error:oe}]=await Promise.all([supabaseClient.from("warehouse_activities").select("load_count"),supabaseClient.from("offloaded_activities").select("vehicle_count")]);if(le||oe)return console.error(le||oe);document.getElementById("loadedTotal").textContent=(ld||[]).reduce((s,r)=>s+(Number(r.load_count)||0),0);document.getElementById("offloadedTotal").textContent=(od||[]).reduce((s,r)=>s+(Number(r.vehicle_count)||0),0)}
 async function searchHub(){const hub=document.getElementById("hubSearch").value,from=document.getElementById("hubFromDate").value.trim(),to=document.getElementById("hubToDate").value.trim(),body=document.getElementById("historyResults"),span=adminLoggedIn?10:9;if(!hub)return body.innerHTML=`<tr><td colspan="${span}" style="text-align:center;color:#a51d1d">Please select a hub.</td></tr>`;if(from&&!validateEthDate(from)||to&&!validateEthDate(to))return body.innerHTML=`<tr><td colspan="${span}" style="text-align:center;color:#a51d1d">Invalid date.</td></tr>`;let q=supabaseClient.from("warehouse_activities").select("*").eq("hub",hub);if(from)q=q.gte("activity_date",ethiopianToGregorian(from));if(to)q=q.lt("activity_date",addGregorianDays(ethiopianToGregorian(to),1));const{data,error}=await q.order("activity_date",{ascending:false}).order("created_at",{ascending:false});if(error)return body.innerHTML=`<tr><td colspan="${span}" style="text-align:center;color:#a51d1d">${escapeHtml(error.message)}</td></tr>`;body.innerHTML=data?.length?data.map(loadedRow).join(""):`<tr><td colspan="${span}" style="text-align:center">No history found.</td></tr>`}
 async function searchLoadedByDate(){const from=document.getElementById("dateFrom").value.trim(),to=document.getElementById("dateTo").value.trim(),body=document.getElementById("dateSearchResults"),span=adminLoggedIn?10:9;if(!from&&!to)return body.innerHTML=`<tr><td colspan="${span}" style="text-align:center">Please enter a date.</td></tr>`;if(from&&!validateEthDate(from)||to&&!validateEthDate(to))return body.innerHTML=`<tr><td colspan="${span}" style="text-align:center;color:#a51d1d">Invalid date.</td></tr>`;let q=supabaseClient.from("warehouse_activities").select("*");if(from)q=q.gte("activity_date",ethiopianToGregorian(from));if(to)q=q.lt("activity_date",addGregorianDays(ethiopianToGregorian(to),1));const{data,error}=await q.order("activity_date",{ascending:false}).order("created_at",{ascending:false});if(error)return body.innerHTML=`<tr><td colspan="${span}" style="text-align:center;color:#a51d1d">${escapeHtml(error.message)}</td></tr>`;body.innerHTML=data?.length?data.map(loadedRow).join(""):`<tr><td colspan="${span}" style="text-align:center">No loaded activity found.</td></tr>`}
