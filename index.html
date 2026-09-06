@@ -2004,7 +2004,24 @@ function showAdmin(user){
   "🔓 Logout":
   "🔐 Admin Login";
 
+document
+.getElementById("togglePasswordButton")
+.onclick=
+togglePasswordVisibility;
+  document
+.getElementById("adminPassword")
+.addEventListener(
+"keydown",
+event=>{
 
+  if(event.key==="Enter"){
+
+    adminLogin();
+
+  }
+
+}
+);
   const isSuperAdmin=
   currentUserProfile?.role===
   "super_admin";
