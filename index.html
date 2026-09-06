@@ -1817,7 +1817,164 @@ found.warehouse_name;
 await refreshAllData();
 
 }
+/* =========================
+PASSWORD RECOVERY
+========================= */
 
+function passwordRecoveryMsg(text, color){
+
+  const box =
+    document.getElementById(
+      "passwordRecoveryMessage"
+    );
+
+  box.textContent = text;
+
+  box.style.color =
+    color || "";
+
+}
+
+
+async function updatePassword(){
+
+  const password =
+    document
+      .getElementById("newPassword")
+      .value;
+
+  const confirmPassword =
+    document
+      .getElementById("confirmNewPassword")
+      .value;
+
+
+  if(!password || !confirmPassword){
+
+    passwordRecoveryMsg(
+      "Please enter and confirm your new password.",
+      "#a51d1d"
+    );
+
+    return;
+
+  }
+
+
+  if(password.length < 6){
+
+    passwordRecoveryMsg(
+      "Password must be at least 6 characters.",
+      "#a51d1d"
+    );
+
+    return;
+
+  }
+
+
+  if(password !== confirmPassword){
+
+    passwordRecoveryMsg(
+      "Passwords do not match.",
+      "#a51d1d"
+    );
+
+    return;
+
+  }
+
+
+  const button =
+    document.getElementById(
+      "updatePasswordButton"
+    );
+
+  button.disabled = true;
+
+  button.textContent =
+    "UPDATING PASSWORD...";
+
+
+  try{
+
+    const { error } =
+      await supabaseClient
+        .auth
+        .updateUser({
+          password: password
+        });
+
+
+    if(error) throw error;
+
+
+    passwordRecoveryMsg(
+      "Password updated successfully! You can now login with your new password. ✅",
+      "#176b36"
+    );
+
+
+    setTimeout(async ()=>{
+
+      document
+        .getElementById(
+          "passwordRecoveryBox"
+        )
+        .style.display =
+        "none";
+
+
+      document
+        .getElementById(
+          "newPassword"
+        )
+        .value = "";
+
+
+      document
+        .getElementById(
+          "confirmNewPassword"
+        )
+        .value = "";
+
+
+      await supabaseClient
+        .auth
+        .signOut();
+
+
+      showAdmin(null);
+
+
+      document
+        .getElementById(
+          "adminLoginBox"
+        )
+        .style.display =
+        "block";
+
+    }, 1500);
+
+
+  }catch(e){
+
+    passwordRecoveryMsg(
+      "Failed to update password: " +
+      e.message,
+      "#a51d1d"
+    );
+
+  }finally{
+
+    button.disabled = false;
+
+    button.textContent =
+      "🔐 UPDATE PASSWORD";
+
+  }
+
+        }
 
 /* =========================
 PROFILE
