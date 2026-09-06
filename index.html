@@ -1725,68 +1725,88 @@ await refreshAllData();
 /* =========================
 PROFILE
 ========================= */
-
 async function loadCurrentUserProfile(){
 
-const {data:sessionData,error:sessionError}=
-await supabaseClient.auth.getSession();
+  const { data: sessionData, error: sessionError } =
+    await supabaseClient.auth.getSession();
 
-if(sessionError)
-throw sessionError;
+  if(sessionError) throw sessionError;
 
-const user=
-sessionData?.session?.user;
+  const user = sessionData?.session?.user;
 
-if(!user){
+  if(!user){
 
-currentUser=null;
-currentUserProfile=null;
+    currentUser = null;
+    currentUserProfile = null;
+    currentWarehouse = null;
 
-return null;
+    return null;
+  }
 
-}
+  currentUser = user;
 
-currentUser=user;
+  // Get profile only first
+  const { data: profiles, error: profileError } =
+    await supabaseClient
+      .from("profiles")
+      .select(`
+        id,
+        full_name,
+        role,
+        warehouse_id,
+        is_active
+      `)
+      .eq("id", user.id)
+      .limit(1);
 
-const {data:profile,error:profileError}=
-await supabaseClient
-.from("profiles")
-.select(`
-id,
-full_name,
-role,
-warehouse_id,
-is_active,
-warehouses (
-id,
-warehouse_name
-)
-`)
-.eq("id",user.id)
-.maybeSingle();
+  if(profileError) throw profileError;
 
-if(profileError)
-throw profileError;
+  if(!profiles || profiles.length === 0){
 
-if(!profile)
-throw new Error(
-"Your login account does not have a profile."
-);
+    throw new Error(
+      "Your login account does not have a profile. Contact the Super Admin."
+    );
+  }
 
-if(profile.is_active===false){
+  const profile = profiles[0];
 
-await supabaseClient.auth.signOut();
+  if(!profile.is_active){
 
-throw new Error(
-"Your account has been deactivated."
-);
+    await supabaseClient.auth.signOut();
 
-}
+    throw new Error(
+      "Your account has been deactivated."
+    );
+  }
 
-currentUserProfile=profile;
+  currentUserProfile = profile;
 
-return profile;
+  currentWarehouse = null;
 
+  // Get warehouse separately only when the user has one
+  if(profile.warehouse_id){
+
+    const { data: warehouse, error: warehouseError } =
+      await supabaseClient
+        .from("warehouses")
+        .select(`
+          id,
+          warehouse_name,
+          warehouse_code,
+          is_active
+        `)
+        .eq("id", profile.warehouse_id)
+        .limit(1);
+
+    if(warehouseError) throw warehouseError;
+
+    currentWarehouse =
+      warehouse && warehouse.length
+        ? warehouse[0]
+        : null;
+  }
+
+  return profile;
 }
 
 
