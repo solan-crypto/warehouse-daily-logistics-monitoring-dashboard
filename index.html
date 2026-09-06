@@ -2416,7 +2416,43 @@ return currentUserProfile?.role===
 "super_admin";
 
 }
+/* =========================
+AUTH SESSION MONITOR
+========================= */
 
+supabaseClient
+.auth
+.onAuthStateChange(
+async(event,session)=>{
+
+  console.log(
+  "Auth event:",
+  event
+  );
+
+
+  if(
+  session?.user
+  ){
+
+    currentUser=
+    session.user;
+
+
+  }else{
+
+
+    currentUser=null;
+
+    currentUserProfile=null;
+
+    currentWarehouse=null;
+
+
+  }
+
+}
+);
 
 /* =========================
 ACTIVITY ROWS
