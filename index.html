@@ -1476,7 +1476,49 @@ window.supabase.createClient(
 SUPABASE_URL,
 SUPABASE_ANON_KEY
 );
+  
+/* =========================
+PASSWORD RECOVERY LISTENER
+========================= */
 
+supabaseClient.auth.onAuthStateChange(
+  (event, session) => {
+
+    console.log("Auth event:", event);
+
+    if (event === "PASSWORD_RECOVERY") {
+
+      setTimeout(() => {
+
+        const recoveryBox =
+          document.getElementById(
+            "passwordRecoveryBox"
+          );
+
+        if (recoveryBox) {
+
+          recoveryBox.style.display =
+            "block";
+
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+          });
+
+        } else {
+
+          console.error(
+            "Password recovery box was not found."
+          );
+
+        }
+
+      }, 300);
+
+    }
+
+  }
+);
 
 /* =========================
 GLOBAL VARIABLES
