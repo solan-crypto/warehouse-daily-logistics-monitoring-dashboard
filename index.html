@@ -535,7 +535,64 @@ CANCEL
 
 
 <main class="container">
+<!-- PASSWORD RECOVERY -->
+<div id="passwordRecoveryBox" class="admin-login-box">
 
+  <div class="admin-login-header">
+    <div class="admin-login-icon">🔑</div>
+    <h2>Create New Password</h2>
+    <p>Enter your new password below</p>
+  </div>
+
+  <div class="admin-login-content">
+
+    <div class="admin-input-group">
+      <label>New Password</label>
+
+      <div style="display:flex;gap:8px">
+        <input
+          type="password"
+          id="newPassword"
+          placeholder="Enter new password">
+
+        <button
+          type="button"
+          id="toggleNewPassword"
+          style="width:auto;padding:10px;border:1px solid #ccd4e0;border-radius:8px;background:#fff;cursor:pointer">
+          👁
+        </button>
+      </div>
+    </div>
+
+    <div class="admin-input-group">
+      <label>Confirm New Password</label>
+
+      <div style="display:flex;gap:8px">
+        <input
+          type="password"
+          id="confirmNewPassword"
+          placeholder="Confirm new password">
+
+        <button
+          type="button"
+          id="toggleConfirmPassword"
+          style="width:auto;padding:10px;border:1px solid #ccd4e0;border-radius:8px;background:#fff;cursor:pointer">
+          👁
+        </button>
+      </div>
+    </div>
+
+    <button
+      id="updatePasswordButton"
+      class="login-button"
+      type="button">
+      🔐 UPDATE PASSWORD
+    </button>
+
+    <div id="passwordRecoveryMessage"></div>
+
+  </div>
+</div>
 
 <!-- PUBLIC WAREHOUSE SELECTOR -->
 
