@@ -1924,7 +1924,61 @@ async function loadCurrentUserProfile(){
   return profile;
 
 }
+/* =========================
+PASSWORD VISIBILITY
+========================= */
 
+function togglePasswordVisibility(){
+
+  const passwordInput=
+  document.getElementById(
+  "adminPassword"
+  );
+
+
+  const toggleButton=
+  document.getElementById(
+  "togglePasswordButton"
+  );
+
+
+  if(
+  passwordInput.type==="password"
+  ){
+
+    passwordInput.type=
+    "text";
+
+
+    toggleButton.textContent=
+    "🙈";
+
+
+    toggleButton.setAttribute(
+    "aria-label",
+    "Hide password"
+    );
+
+
+  }else{
+
+
+    passwordInput.type=
+    "password";
+
+
+    toggleButton.textContent=
+    "👁️";
+
+
+    toggleButton.setAttribute(
+    "aria-label",
+    "Show password"
+    );
+
+  }
+
+      }
 
 /* =========================
 LOGIN
