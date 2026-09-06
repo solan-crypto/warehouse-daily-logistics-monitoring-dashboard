@@ -1,0 +1,4666 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123a91">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="EPSS Logistics">
+
+<link rel="manifest" href="./manifest.json">
+
+<title>EPSS Warehouse Logistics Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+body{
+  font-family:Arial,sans-serif;
+  background:#f4f7fb;
+  color:#172033;
+  line-height:1.5;
+}
+
+.header{
+  background:linear-gradient(135deg,#09245f,#1746b0);
+  color:#fff;
+  text-align:center;
+  padding:28px 15px;
+}
+
+.header h1{
+  font-size:28px;
+  margin-bottom:8px;
+}
+
+.header p{
+  font-size:15px;
+  opacity:.9;
+}
+
+.container{
+  width:94%;
+  max-width:1300px;
+  margin:20px auto;
+}
+
+.card,.activity-card{
+  background:#fff;
+  border-radius:14px;
+  padding:22px;
+  margin-bottom:20px;
+  box-shadow:0 4px 15px rgba(0,0,0,.08);
+}
+
+.section-title{
+  color:#123a91;
+  margin:25px 0 12px;
+  font-size:21px;
+}
+
+input,select,textarea{
+  width:100%;
+  padding:12px;
+  border:1px solid #ccd4e0;
+  border-radius:8px;
+  font-size:15px;
+  background:#fff;
+}
+
+input:focus,select:focus,textarea:focus{
+  outline:none;
+  border-color:#1746b0;
+  box-shadow:0 0 0 2px rgba(23,70,176,.1);
+}
+
+label{
+  font-weight:bold;
+  margin-bottom:7px;
+  color:#34405a;
+}
+
+textarea{
+  min-height:90px;
+  resize:vertical;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+
+.form-group{
+  display:flex;
+  flex-direction:column;
+}
+
+.activity-stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:15px;
+}
+
+.stat{
+  text-align:center;
+  padding:20px;
+  border-radius:12px;
+  background:#f5f7fc;
+}
+
+.stat h3{
+  font-size:16px;
+  margin-bottom:8px;
+}
+
+.stat-number{
+  font-size:34px;
+  font-weight:bold;
+  color:#123a91;
+}
+
+.table-card{
+  background:#fff;
+  border-radius:14px;
+  margin-bottom:20px;
+  box-shadow:0 4px 15px rgba(0,0,0,.08);
+  overflow:auto;
+}
+
+.recent-table-card{
+  max-height:470px;
+}
+
+table{
+  width:100%;
+  min-width:1350px;
+  border-collapse:collapse;
+}
+
+th{
+  background:#123a91;
+  color:#fff;
+  padding:13px;
+  text-align:left;
+  white-space:nowrap;
+  position:sticky;
+  top:0;
+  z-index:2;
+}
+
+td{
+  padding:12px;
+  border-bottom:1px solid #e5e8ee;
+  vertical-align:top;
+}
+
+tr:hover td{
+  background:#f7f9fd;
+}
+
+button{
+  font-family:inherit;
+}
+
+.save-button,.search-button{
+  border:0;
+  border-radius:8px;
+  background:#123a91;
+  color:#fff;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.save-button{
+  width:100%;
+  margin-top:18px;
+  padding:14px;
+  font-size:16px;
+}
+
+.search-button{
+  padding:12px 22px;
+}
+
+.save-button:disabled,
+.login-button:disabled{
+  background:#8b96aa;
+  cursor:not-allowed;
+}
+
+.admin-button{
+  margin-top:15px;
+  padding:11px 22px;
+  border:1px solid rgba(255,255,255,.7);
+  border-radius:10px;
+  background:#fff;
+  color:#123a91;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.admin-login-box{
+  display:none;
+  width:94%;
+  max-width:450px;
+  margin:22px auto;
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 8px 28px rgba(0,0,0,.14);
+  overflow:hidden;
+  border:1px solid #e1e6ef;
+}
+
+.admin-login-header{
+  background:linear-gradient(135deg,#09245f,#1746b0);
+  color:#fff;
+  padding:20px;
+  text-align:center;
+}
+
+.admin-login-icon{
+  font-size:34px;
+}
+
+.admin-login-content{
+  padding:22px;
+}
+
+.admin-input-group{
+  margin-bottom:14px;
+}
+
+.login-button,.cancel-button{
+  width:100%;
+  padding:13px;
+  border:0;
+  border-radius:9px;
+  font-weight:bold;
+  cursor:pointer;
+  margin-top:9px;
+  font-size:15px;
+}
+
+.login-button{
+  background:#123a91;
+  color:#fff;
+}
+
+.cancel-button{
+  background:#edf0f5;
+  color:#34405a;
+}
+
+#loginMessage,
+#resetPasswordMessage{
+  margin-top:13px;
+  font-weight:bold;
+  text-align:center;
+  min-height:20px;
+}
+
+.action-buttons{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+}
+
+.edit-button,.delete-button,.remove-row-button{
+  border:0;
+  border-radius:7px;
+  padding:8px 11px;
+  font-weight:bold;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.edit-button{
+  background:#e8f0ff;
+  color:#123a91;
+}
+
+.delete-button,.remove-row-button{
+  background:#fdecec;
+  color:#a51d1d;
+}
+
+.cancel-edit-button{
+  width:100%;
+  margin-top:10px;
+  padding:12px;
+  border:0;
+  border-radius:8px;
+  background:#e5e8ee;
+  color:#34405a;
+  font-weight:bold;
+  cursor:pointer;
+  display:none;
+}
+
+.message{
+  display:none;
+  margin-top:15px;
+  padding:12px;
+  border-radius:8px;
+  font-weight:bold;
+}
+
+.success{
+  display:block;
+  background:#e7f7ed;
+  color:#176b36;
+}
+
+.error{
+  display:block;
+  background:#fdecec;
+  color:#a51d1d;
+}
+
+.add-row-button{
+  margin-top:15px;
+  padding:11px 18px;
+  border:0;
+  border-radius:8px;
+  background:#e8f0ff;
+  color:#123a91;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.vehicle-total-box{
+  margin-top:15px;
+  padding:13px;
+  border-radius:9px;
+  background:#f5f7fc;
+  font-weight:bold;
+  color:#123a91;
+}
+
+.activity-switch{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+}
+
+.activity-switch button{
+  flex:1;
+  padding:13px;
+  border:1px solid #ccd4e0;
+  border-radius:9px;
+  background:#f5f7fc;
+  color:#34405a;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.activity-switch button.active{
+  background:#123a91;
+  color:#fff;
+  border-color:#123a91;
+}
+
+.hidden{
+  display:none!important;
+}
+
+.badge{
+  display:inline-block;
+  padding:4px 9px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:bold;
+  background:#eef2ff;
+  color:#123a91;
+}
+
+.offloaded-badge{
+  background:#e9f7ef;
+  color:#176b36;
+}
+
+.super-admin-card{
+  border:2px solid #123a91;
+}
+
+.super-admin-title{
+  color:#123a91;
+  font-size:20px;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+
+footer{
+  text-align:center;
+  padding:30px 15px;
+  color:#667085;
+  font-size:14px;
+}
+
+@media(max-width:700px){
+
+  .header{
+    padding:22px 12px;
+  }
+
+  .header h1{
+    font-size:22px;
+  }
+
+  .card,.activity-card{
+    padding:16px;
+  }
+
+  .form-grid,
+  .activity-stats{
+    grid-template-columns:1fr;
+  }
+
+  table{
+    min-width:1350px;
+  }
+
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+
+<h1>EPSS Warehouse Logistics Dashboard</h1>
+
+<p>Warehouse Activity Monitoring System</p>
+
+<button id="adminLoginButton"
+class="admin-button"
+type="button">
+🔐 Admin Login
+</button>
+
+</header>
+
+
+<div id="adminLoginBox"
+class="admin-login-box">
+
+<div class="admin-login-header">
+<div class="admin-login-icon">🔐</div>
+<h2>Admin Login</h2>
+<p>Authorized personnel only</p>
+</div>
+
+<div class="admin-login-content">
+
+<div class="admin-input-group">
+<label>Email</label>
+<input
+type="email"
+id="adminEmail"
+placeholder="Enter admin email">
+</div>
+
+<div class="admin-input-group">
+<label>Password</label>
+<input
+type="password"
+id="adminPassword"
+placeholder="Enter password">
+</div>
+
+<button
+id="loginButton"
+class="login-button"
+type="button">
+🔓 LOGIN
+</button>
+
+<button
+id="cancelLoginButton"
+class="cancel-button"
+type="button">
+CANCEL
+</button>
+
+<button id="forgotPasswordButton"
+class="cancel-button"
+type="button">
+Forgot Password?
+</button>
+
+<div id="loginMessage"></div>
+
+</div>
+</div>
+
+<div id="resetPasswordBox"
+class="admin-login-box">
+
+<div class="admin-login-header">
+<div class="admin-login-icon">🔑</div>
+<h2>Set New Password</h2>
+<p>Choose a new password for your admin account</p>
+</div>
+
+<div class="admin-login-content">
+
+<div class="admin-input-group">
+<label>New Password</label>
+<input
+type="password"
+id="newPassword"
+placeholder="Enter new password"
+autocomplete="new-password">
+</div>
+
+<div class="admin-input-group">
+<label>Confirm New Password</label>
+<input
+type="password"
+id="confirmNewPassword"
+placeholder="Confirm new password"
+autocomplete="new-password">
+</div>
+
+<button
+id="updatePasswordButton"
+class="login-button"
+type="button">
+UPDATE PASSWORD
+</button>
+
+<div id="resetPasswordMessage"></div>
+
+</div>
+</div>
+
+
+<main class="container">
+
+
+<!-- PUBLIC WAREHOUSE SELECTOR -->
+
+<h2 class="section-title">Warehouse</h2>
+
+<section class="card">
+
+<div class="form-group">
+
+<label>Select or Type Warehouse</label>
+
+<input
+id="publicWarehouse"
+list="warehouseList"
+placeholder="Select or type warehouse name">
+
+<datalist id="warehouseList"></datalist>
+
+</div>
+
+<button
+id="applyWarehouseButton"
+class="search-button"
+type="button"
+style="width:100%;margin-top:18px">
+
+🔎 VIEW WAREHOUSE DATA
+
+</button>
+
+</section>
+
+
+<!-- TOTAL -->
+
+<h2 class="section-title">Total Activity</h2>
+
+<section class="activity-card">
+
+<div class="activity-stats">
+
+<div class="stat">
+<h3>Loaded</h3>
+<div
+class="stat-number"
+id="loadedTotal">0</div>
+</div>
+
+<div class="stat">
+<h3>Offloaded</h3>
+<div
+class="stat-number"
+id="offloadedTotal">0</div>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- RECENT -->
+
+<h2 class="section-title">
+Recent 7 Days Activity
+</h2>
+
+<section class="table-card recent-table-card">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Date</th>
+<th>Activity</th>
+<th>Start Time</th>
+<th>End Time</th>
+<th>Vehicle</th>
+<th>Vehicle Count</th>
+<th>Hub</th>
+<th>Source / Origin</th>
+<th>Mode</th>
+<th>Bill / AWB</th>
+<th>Inbound No.</th>
+<th>Items</th>
+<th>Challenges</th>
+<th>Created By</th>
+<th>Created At</th>
+
+<th
+id="recentActionsHeader"
+style="display:none">
+
+Actions
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody id="recentActivity">
+
+<tr>
+<td
+colspan="16"
+style="text-align:center">
+
+Loading...
+
+</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</section>
+
+
+<!-- HUB HISTORY -->
+
+<h2 class="section-title">
+Search Hub History
+</h2>
+
+<section class="card">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Select Hub</label>
+
+<select id="hubSearch">
+<option value="">
+Select Hub
+</option>
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>From Date</label>
+
+<input
+id="hubFromDate"
+type="text"
+placeholder="YYYY-MM-DD">
+
+</div>
+
+<div class="form-group">
+
+<label>To Date</label>
+
+<input
+id="hubToDate"
+type="text"
+placeholder="YYYY-MM-DD">
+
+</div>
+
+</div>
+
+<button
+id="hubSearchButton"
+class="search-button"
+type="button"
+style="width:100%;margin-top:18px">
+
+🔎 SEARCH HISTORY
+
+</button>
+
+
+<div
+class="table-card"
+style="margin-top:20px">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Date</th>
+<th>Activity</th>
+<th>Start Time</th>
+<th>End Time</th>
+<th>Vehicle</th>
+<th>Vehicle Count</th>
+<th>Hub</th>
+<th>Items</th>
+<th>Challenges</th>
+<th>Created By</th>
+<th>Created At</th>
+
+<th
+id="historyActionsHeader"
+style="display:none">
+
+Actions
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody id="historyResults">
+
+<tr>
+<td
+colspan="12"
+style="text-align:center">
+
+Select a hub to search
+
+</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</section>
+
+
+<!-- DATE SEARCH LOADED -->
+
+<h2 class="section-title">
+Search Loaded Activity by Date
+</h2>
+
+<section class="card">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>From Date</label>
+
+<input
+id="dateFrom"
+type="text"
+placeholder="YYYY-MM-DD">
+
+</div>
+
+<div class="form-group">
+
+<label>To Date</label>
+
+<input
+id="dateTo"
+type="text"
+placeholder="YYYY-MM-DD">
+
+</div>
+
+</div>
+
+<button
+id="dateSearchButton"
+class="search-button"
+type="button"
+style="width:100%;margin-top:18px">
+
+🔎 SEARCH LOADED BY DATE
+
+</button>
+
+<div
+class="table-card"
+style="margin-top:20px">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Date</th>
+<th>Activity</th>
+<th>Start Time</th>
+<th>End Time</th>
+<th>Vehicle</th>
+<th>Vehicle Count</th>
+<th>Hub</th>
+<th>Items</th>
+<th>Challenges</th>
+<th>Created By</th>
+<th>Created At</th>
+
+<th
+id="dateActionsHeader"
+style="display:none">
+
+Actions
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody id="dateSearchResults">
+
+<tr>
+
+<td
+colspan="12"
+style="text-align:center">
+
+Enter date and search
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</section>
+
+
+<!-- DATE SEARCH OFFLOADED -->
+
+<h2 class="section-title">
+Search Offloaded Activity by Date
+</h2>
+
+<section class="card">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>From Date</label>
+
+<input
+id="offDateFrom"
+type="text"
+placeholder="YYYY-MM-DD">
+
+</div>
+
+<div class="form-group">
+
+<label>To Date</label>
+
+<input
+id="offDateTo"
+type="text"
+placeholder="YYYY-MM-DD">
+
+</div>
+
+</div>
+
+<button
+id="offDateSearchButton"
+class="search-button"
+type="button"
+style="width:100%;margin-top:18px">
+
+🔎 SEARCH OFFLOADED BY DATE
+
+</button>
+
+<div
+class="table-card"
+style="margin-top:20px">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Date</th>
+<th>Source / Origin</th>
+<th>Mode</th>
+<th>Vehicle</th>
+<th>Vehicle Count</th>
+<th>Bill / AWB</th>
+<th>Inbound No.</th>
+<th>Items</th>
+<th>Challenges</th>
+<th>Created By</th>
+<th>Created At</th>
+
+<th
+id="offDateActionsHeader"
+style="display:none">
+
+Actions
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody id="offDateResults">
+
+<tr>
+
+<td
+colspan="12"
+style="text-align:center">
+
+Enter date and search
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</section>
+
+
+<!-- ADMIN ENTRY -->
+
+<div
+id="adminActivitySection"
+style="display:none">
+
+<h2 class="section-title">
+Daily Activity Entry
+</h2>
+
+<section class="card">
+
+<div class="activity-switch">
+
+<button
+id="loadedEntryTab"
+type="button"
+class="active">
+
+🟢 Loaded Entry
+
+</button>
+
+<button
+id="offloadedEntryTab"
+type="button">
+
+🔵 Offloaded Entry
+
+</button>
+
+</div>
+
+
+<!-- LOADED -->
+
+<div id="loadedEntryPanel">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Activity Date</label>
+
+<input
+id="activityDate"
+type="text"
+placeholder="YYYY-MM-DD">
+
+</div>
+
+<div class="form-group">
+
+<label>Starting Time</label>
+
+<input
+id="startTime"
+type="time">
+
+</div>
+
+<div class="form-group">
+
+<label>Ending Time</label>
+
+<input
+id="endTime"
+type="time">
+
+</div>
+
+</div>
+
+
+<div
+class="table-card"
+style="margin-top:20px">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Hub</th>
+<th>Vehicle</th>
+<th>Vehicle Count</th>
+<th>Items</th>
+<th>Challenge</th>
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody id="dailyRows"></tbody>
+
+</table>
+
+</div>
+
+<button
+id="addRowButton"
+class="add-row-button"
+type="button">
+
+➕ ADD ROW
+
+</button>
+
+<div class="vehicle-total-box">
+
+Total vehicles:
+<span id="vehicleTotal">0</span>
+
+</div>
+
+<button
+id="saveLoadedButton"
+class="save-button"
+type="button">
+
+SAVE LOADED ACTIVITY
+
+</button>
+
+<button
+id="cancelLoadedEditButton"
+class="cancel-edit-button"
+type="button">
+
+CANCEL EDIT
+
+</button>
+
+</div>
+
+
+<!-- OFFLOADED -->
+
+<div
+id="offloadedEntryPanel"
+class="hidden">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Activity Date</label>
+
+<input
+id="offActivityDate"
+type="text"
+placeholder="YYYY-MM-DD">
+
+</div>
+
+<div class="form-group">
+
+<label>Source / Origin</label>
+
+<input
+id="offSourceOrigin"
+type="text">
+
+</div>
+
+<div class="form-group">
+
+<label>Mode of Transport</label>
+
+<select id="offMode">
+
+<option value="">
+Select Mode
+</option>
+
+<option>Land</option>
+<option>Air</option>
+<option>Sea</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Vehicle</label>
+
+<select id="offVehicle">
+
+<option value="">
+Select Vehicle
+</option>
+
+<option>20ft container</option>
+<option>40ft container</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Count of Vehicle</label>
+
+<input
+id="offVehicleCount"
+type="number"
+min="1"
+value="1">
+
+</div>
+
+<div class="form-group">
+
+<label>Bill of Loading / Airway Bill</label>
+
+<input
+id="offBillAwb"
+type="text">
+
+</div>
+
+<div class="form-group">
+
+<label>Inbound Number</label>
+
+<input
+id="offInboundNumber"
+type="text">
+
+</div>
+
+<div class="form-group">
+
+<label>Items</label>
+
+<input
+id="offItems"
+type="text">
+
+</div>
+
+<div class="form-group">
+
+<label>Challenges</label>
+
+<textarea id="offChallenges"></textarea>
+
+</div>
+
+</div>
+
+<button
+id="saveOffloadedButton"
+class="save-button"
+type="button">
+
+SAVE OFFLOADED ACTIVITY
+
+</button>
+
+<button
+id="cancelOffEditButton"
+class="cancel-edit-button"
+type="button">
+
+CANCEL EDIT
+
+</button>
+
+</div>
+
+<div
+id="message"
+class="message">
+
+</div>
+
+</section>
+
+</div>
+
+
+<!-- SUPER ADMIN -->
+
+<div
+id="superAdminSection"
+style="display:none">
+
+<h2 class="section-title">
+Super Admin Panel
+</h2>
+
+
+<section class="card super-admin-card">
+
+<div class="super-admin-title">
+🏢 Manage Warehouses
+</div>
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Warehouse Name</label>
+
+<input
+id="newWarehouseName"
+type="text"
+placeholder="Example: HOM10">
+
+</div>
+
+<div class="form-group"
+style="justify-content:end">
+
+<button
+id="addWarehouseButton"
+class="search-button"
+type="button">
+
+➕ ADD WAREHOUSE
+
+</button>
+
+</div>
+
+</div>
+
+
+<div
+class="table-card"
+style="margin-top:20px">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Warehouse</th>
+<th>Status</th>
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody id="warehouseManagementRows">
+
+<tr>
+
+<td
+colspan="3"
+style="text-align:center">
+
+Loading warehouses...
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</section>
+
+
+<section class="card super-admin-card">
+
+<div class="super-admin-title">
+👤 Manage Admins
+</div>
+
+<div class="form-grid">
+
+<div class="form-group">
+<label>Admin Full Name</label>
+<input id="newAdminName" type="text" placeholder="Enter admin full name">
+</div>
+
+<div class="form-group">
+<label>Admin Email</label>
+<input id="newAdminEmail" type="email" placeholder="admin@example.com">
+</div>
+
+<div class="form-group">
+<label>Initial Password</label>
+<div style="display:flex;gap:8px;align-items:center">
+<input id="newAdminPassword" type="password" placeholder="At least 6 characters">
+<button id="toggleNewAdminPassword" class="edit-button" type="button" style="flex:0 0 auto">👁 Show</button>
+</div>
+</div>
+
+<div class="form-group">
+<label>Role</label>
+<select id="newAdminRole">
+<option value="admin">Admin</option>
+<option value="super_admin">Super Admin</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Warehouse</label>
+<select id="newAdminWarehouse">
+<option value="">Select Warehouse</option>
+</select>
+</div>
+
+<div class="form-group" style="justify-content:end">
+<button id="addAdminButton" class="search-button" type="button">
+➕ ADD ADMIN
+</button>
+</div>
+
+</div>
+
+<div id="adminManagementMessage" class="message"></div>
+
+<div
+class="table-card"
+style="margin-top:20px">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Name</th>
+<th>Role</th>
+<th>Warehouse</th>
+<th>Status</th>
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody id="adminManagementRows">
+
+<tr>
+
+<td
+colspan="5"
+style="text-align:center">
+
+Loading admins...
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</section>
+
+</div>
+
+
+</main>
+
+
+<footer>
+EPSS Warehouse Logistics Dashboard © 2026
+</footer>
+
+
+<script>
+
+/* =========================
+SUPABASE
+========================= */
+
+const SUPABASE_URL=
+"https://dddodxskaioloppidjtu.supabase.co";
+
+const SUPABASE_ANON_KEY=
+"sb_publishable_-7JmLAl0vVr_rIc5XyuEfw_aoOqbcGi";
+
+const supabaseClient=
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_ANON_KEY
+);
+
+
+/* =========================
+GLOBAL VARIABLES
+========================= */
+
+let adminLoggedIn=false;
+
+let currentUser=null;
+let currentUserProfile=null;
+
+let selectedWarehouseId=null;
+let selectedWarehouseName="";
+
+let editingId=null;
+let editingType=null;
+
+let warehouses=[];
+let currentWarehouse=null;
+
+
+/* =========================
+LISTS
+========================= */
+
+const HUBS=[
+"AA1hp",
+"AA1 MainWH",
+"AA2",
+"Adama",
+"Hawasa",
+"Negelle",
+"Nekemte",
+"Jimma",
+"D.Dawa",
+"Jigjiga",
+"Arbaminch",
+"Semera",
+"Gambella",
+"Asosa",
+"Bahir Dar",
+"Gondar",
+"Dessie",
+"Kebridar",
+"Mekele",
+"Shire"
+];
+
+const VEHICLES=[
+"Tesabi",
+"Iveco",
+"Lowbed",
+"Van",
+"Shelto"
+];
+
+
+/* =========================
+DATE FUNCTIONS
+========================= */
+
+function gregorianToJDN(y,m,d){
+
+const a=Math.floor((14-m)/12);
+const yy=y+4800-a;
+const mm=m+12*a-3;
+
+return d+
+Math.floor((153*mm+2)/5)+
+365*yy+
+Math.floor(yy/4)-
+Math.floor(yy/100)+
+Math.floor(yy/400)-
+32045;
+
+}
+
+function jdnToGregorian(jdn){
+
+let j=jdn+32044;
+let g=Math.floor(j/146097);
+let dg=j%146097;
+let c=Math.floor((dg/36524+1)*3/4);
+let dc=dg-c*36524;
+let b=Math.floor(dc/1461);
+let db=dc%1461;
+let a=Math.floor((db/365+1)*3/4);
+let da=db-a*365;
+
+let y=g*400+c*100+b*4+a;
+let m=Math.floor((da*5+308)/153)-2;
+let d=da-Math.floor((153*m+2)/5)+1;
+
+return{
+year:y-4800+Math.floor(m/10),
+month:m+3-12*Math.floor(m/10),
+day:d
+};
+
+}
+
+function ethiopianToJDN(y,m,d){
+
+return 1724220+
+365*(y-1)+
+Math.floor(y/4)+
+30*(m-1)+
+(d-1);
+
+}
+
+function jdnToEthiopian(jdn){
+
+const r=Math.floor(jdn)-1724220;
+
+const y=
+Math.floor(r/1461)*4+
+Math.floor((r%1461)/365)+1;
+
+const days=
+r-((y-1)*365+Math.floor((y-1)/4));
+
+return days<360?
+{
+year:y,
+month:Math.floor(days/30)+1,
+day:days%30+1
+}:
+{
+year:y,
+month:13,
+day:days-360+1
+};
+
+}
+
+function ethiopianToGregorian(s){
+
+const p=String(s)
+.trim()
+.split("-")
+.map(Number);
+
+if(
+p.length!==3||
+p.some(n=>!Number.isInteger(n))
+)return null;
+
+const[y,m,d]=p;
+
+if(
+y<1||
+m<1||
+m>13||
+d<1
+)return null;
+
+const max=
+m===13?
+(y%4===3?6:5):
+30;
+
+if(d>max)return null;
+
+const g=
+jdnToGregorian(
+ethiopianToJDN(y,m,d)
+);
+
+return `${g.year}-${String(g.month).padStart(2,"0")}-${String(g.day).padStart(2,"0")}`;
+
+}
+
+function gregorianToEthiopian(s){
+
+const p=String(s)
+.substring(0,10)
+.split("-")
+.map(Number);
+
+if(
+p.length!==3||
+p.some(n=>!Number.isInteger(n))
+)return "";
+
+const j=
+gregorianToJDN(
+p[0],
+p[1],
+p[2]
+);
+
+const e=
+jdnToEthiopian(j);
+
+return `${e.year}-${String(e.month).padStart(2,"0")}-${String(e.day).padStart(2,"0")}`;
+
+}
+
+function getTodayEthiopian(){
+
+const d=new Date();
+
+return gregorianToEthiopian(
+`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`
+);
+
+}
+
+
+/* =========================
+UTILITIES
+========================= */
+
+function escapeHtml(v){
+
+return String(v??"")
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+
+}
+
+function formatCreatedAt(value){
+
+if(!value)return "-";
+
+const d=new Date(value);
+
+if(isNaN(d))return String(value);
+
+return d.toLocaleString();
+
+}
+
+function msg(text,type){
+
+const b=
+document.getElementById("message");
+
+b.textContent=text;
+
+b.className=
+"message "+type;
+
+}
+
+function loginMsg(text,color){
+
+const b=
+document.getElementById("loginMessage");
+
+b.textContent=text;
+
+b.style.color=color||"";
+
+}
+
+function createOptions(arr){
+
+return arr.map(x=>
+`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`
+).join("");
+
+}
+
+
+/* =========================
+WAREHOUSES
+========================= */
+
+async function loadWarehouses(){
+
+const {data,error}=
+await supabaseClient
+.from("warehouses")
+.select("id,warehouse_name,is_active")
+.order("warehouse_name");
+
+if(error)throw error;
+
+warehouses=data||[];
+
+const list=
+document.getElementById("warehouseList");
+
+list.innerHTML=
+warehouses
+.filter(w=>w.is_active!==false)
+.map(w=>
+`<option value="${escapeHtml(w.warehouse_name)}"></option>`
+).join("");
+
+}
+
+async function applyPublicWarehouse(){
+
+const value=
+document
+.getElementById("publicWarehouse")
+.value
+.trim();
+
+selectedWarehouseId=null;
+selectedWarehouseName="";
+
+if(value){
+
+const found=
+warehouses.find(
+w=>
+String(w.warehouse_name)
+.toLowerCase()===
+value.toLowerCase()
+);
+
+if(!found){
+
+alert(
+"Warehouse not found. Please select an existing warehouse."
+);
+
+return;
+
+}
+
+selectedWarehouseId=found.id;
+selectedWarehouseName=found.warehouse_name;
+
+document
+.getElementById("publicWarehouse")
+.value=
+found.warehouse_name;
+
+}
+
+await refreshAllData();
+
+}
+
+
+/* =========================
+PROFILE
+========================= */
+async function loadCurrentUserProfile(){
+
+  const { data: sessionData, error: sessionError } =
+    await supabaseClient.auth.getSession();
+
+  if(sessionError) throw sessionError;
+
+  const user = sessionData?.session?.user;
+
+  if(!user){
+
+    currentUser = null;
+    currentUserProfile = null;
+    currentWarehouse = null;
+
+    return null;
+  }
+
+  currentUser = user;
+
+  // Get profile only first
+  const { data: profiles, error: profileError } =
+    await supabaseClient
+      .from("profiles")
+      .select(`
+        id,
+        full_name,
+        role,
+        warehouse_id,
+        is_active
+      `)
+      .eq("id", user.id)
+      .limit(1);
+
+  if(profileError) throw profileError;
+
+  if(!profiles || profiles.length === 0){
+
+    throw new Error(
+      "Your login account does not have a profile. Contact the Super Admin."
+    );
+  }
+
+  const profile = profiles[0];
+
+  if(!profile.is_active){
+
+    await supabaseClient.auth.signOut();
+
+    throw new Error(
+      "Your account has been deactivated."
+    );
+  }
+
+  currentUserProfile = profile;
+
+  currentWarehouse = null;
+
+  // Get warehouse separately only when the user has one
+  if(profile.warehouse_id){
+
+    const { data: warehouse, error: warehouseError } =
+      await supabaseClient
+        .from("warehouses")
+        .select(`
+          id,
+          warehouse_name,
+          warehouse_code,
+          is_active
+        `)
+        .eq("id", profile.warehouse_id)
+        .limit(1);
+
+    if(warehouseError) throw warehouseError;
+
+    currentWarehouse =
+      warehouse && warehouse.length
+        ? warehouse[0]
+        : null;
+  }
+
+  return profile;
+}
+
+
+/* =========================
+LOGIN
+========================= */
+
+function showAdmin(user){
+
+adminLoggedIn=!!user;
+
+document
+.getElementById("adminActivitySection")
+.style.display=
+user?"block":"none";
+
+const btn=
+document.getElementById(
+"adminLoginButton"
+);
+
+btn.textContent=
+user?
+"🔓 Logout":
+"🔐 Admin Login";
+
+const isSuperAdmin=
+currentUserProfile?.role===
+"super_admin";
+
+document
+.getElementById("superAdminSection")
+.style.display=
+isSuperAdmin?
+"block":
+"none";
+
+updateHeaders();
+
+}
+
+function updateHeaders(){
+
+const display=
+adminLoggedIn?
+"table-cell":
+"none";
+
+[
+"recentActionsHeader",
+"historyActionsHeader",
+"dateActionsHeader",
+"offDateActionsHeader"
+].forEach(id=>{
+
+document
+.getElementById(id)
+.style.display=
+display;
+
+});
+
+}
+
+function toggleLogin(){
+
+if(adminLoggedIn){
+
+adminLogout();
+
+return;
+
+}
+
+const box=
+document.getElementById(
+"adminLoginBox"
+);
+
+box.style.display=
+box.style.display==="block"?
+"none":
+"block";
+
+}
+
+async function adminLogin(){
+
+const email=
+document
+.getElementById("adminEmail")
+.value
+.trim();
+
+const password=
+document
+.getElementById("adminPassword")
+.value;
+
+if(!email||!password){
+
+loginMsg(
+"Please enter email and password.",
+"#a51d1d"
+);
+
+return;
+
+}
+
+const btn=
+document.getElementById(
+"loginButton"
+);
+
+btn.disabled=true;
+btn.textContent="LOGGING IN...";
+
+try{
+
+const {data,error}=
+await supabaseClient
+.auth
+.signInWithPassword({
+email,
+password
+});
+
+if(error)throw error;
+
+if(!data?.user)
+throw new Error(
+"No valid user was returned."
+);
+
+await loadCurrentUserProfile();
+
+showAdmin(data.user);
+
+document
+.getElementById("adminLoginBox")
+.style.display="none";
+
+document
+.getElementById("adminPassword")
+.value="";
+
+await refreshAllData();
+
+if(
+currentUserProfile?.role===
+"super_admin"
+){
+
+await loadWarehouseManagement();
+await loadAdminManagement();
+
+}
+
+}catch(e){
+
+loginMsg(
+"Login failed: "+e.message,
+"#a51d1d"
+);
+
+}finally{
+
+btn.disabled=false;
+btn.textContent="🔓 LOGIN";
+
+}
+
+}
+
+async function adminLogout(){
+
+if(!confirm(
+"Do you want to logout?"
+))return;
+
+try{
+
+const {error}=
+await supabaseClient
+.auth
+.signOut();
+
+if(error)throw error;
+
+currentUser=null;
+currentUserProfile=null;
+
+editingId=null;
+editingType=null;
+
+showAdmin(null);
+
+await refreshAllData();
+
+}catch(e){
+
+alert(
+"Logout failed: "+e.message
+);
+
+}
+
+}
+
+
+/* =========================
+PERMISSIONS
+========================= */
+
+async function isLoggedIn(){
+
+const {data}=
+await supabaseClient
+.auth
+.getSession();
+
+return !!data?.session?.user;
+
+}
+
+function isSuperAdmin(){
+
+return currentUserProfile?.role===
+"super_admin";
+
+}
+
+
+/* =========================
+ACTIVITY ROWS
+========================= */
+
+function actionButtons(id,type){
+
+if(!adminLoggedIn)
+return "";
+
+return `
+<div class="action-buttons">
+
+<button
+class="edit-button"
+type="button"
+onclick="${
+type==="loaded"?
+`editLoaded('${id}')`:
+`editOffloaded('${id}')`
+}">
+
+✏️ Edit
+
+</button>
+
+<button
+class="delete-button"
+type="button"
+onclick="${
+type==="loaded"?
+`deleteLoaded('${id}')`:
+`deleteOffloaded('${id}')`
+}">
+
+🗑️ Delete
+
+</button>
+
+</div>
+`;
+
+}
+
+function getCreatorName(r){
+
+if(
+r.profiles?.full_name
+)return r.profiles.full_name;
+
+return "-";
+
+}
+
+function loadedRow(r){
+
+const date=
+gregorianToEthiopian(
+String(r.activity_date||"")
+.substring(0,10)
+);
+
+return `
+<tr>
+
+<td>${escapeHtml(date||"-")}</td>
+
+<td>
+<span class="badge">
+Loaded
+</span>
+</td>
+
+<td>${escapeHtml(r.start_time?.substring(0,5)||"-")}</td>
+
+<td>${escapeHtml(r.end_time?.substring(0,5)||"-")}</td>
+
+<td>${escapeHtml(r.vehicle||"-")}</td>
+
+<td>${escapeHtml(Number(r.load_count)||0)}</td>
+
+<td>${escapeHtml(r.hub||"-")}</td>
+
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+
+<td>${escapeHtml(r.items||"-")}</td>
+
+<td>${escapeHtml(r.challenges||"-")}</td>
+
+<td>${escapeHtml(getCreatorName(r))}</td>
+
+<td>${escapeHtml(formatCreatedAt(r.created_at))}</td>
+
+${
+adminLoggedIn?
+`<td>${actionButtons(r.id,"loaded")}</td>`:
+""
+}
+
+</tr>
+`;
+
+}
+
+function offloadedRow(r){
+
+const date=
+gregorianToEthiopian(
+String(r.activity_date||"")
+.substring(0,10)
+);
+
+return `
+<tr>
+
+<td>${escapeHtml(date||"-")}</td>
+
+<td>
+<span class="badge offloaded-badge">
+Offloaded
+</span>
+</td>
+
+<td>-</td>
+<td>-</td>
+
+<td>${escapeHtml(r.vehicle||"-")}</td>
+
+<td>${escapeHtml(Number(r.vehicle_count)||0)}</td>
+
+<td>-</td>
+
+<td>${escapeHtml(r.source_origin||"-")}</td>
+
+<td>${escapeHtml(r.mode_of_transport||"-")}</td>
+
+<td>${escapeHtml(r.bill_of_loading_awb||"-")}</td>
+
+<td>${escapeHtml(r.inbound_number||"-")}</td>
+
+<td>${escapeHtml(r.items||"-")}</td>
+
+<td>${escapeHtml(r.challenges||"-")}</td>
+
+<td>${escapeHtml(getCreatorName(r))}</td>
+
+<td>${escapeHtml(formatCreatedAt(r.created_at))}</td>
+
+${
+adminLoggedIn?
+`<td>${actionButtons(r.id,"offloaded")}</td>`:
+""
+}
+
+</tr>
+`;
+
+}
+
+
+/* =========================
+RECENT ACTIVITY
+========================= */
+
+function getLast7DaysRange(){
+
+const now=new Date();
+
+const today=
+`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+
+const start=new Date(now);
+
+start.setDate(
+start.getDate()-6
+);
+
+const from=
+`${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,"0")}-${String(start.getDate()).padStart(2,"0")}`;
+
+return {from,to:today};
+
+}
+
+async function loadRecentActivity(){
+
+const body=
+document.getElementById(
+"recentActivity"
+);
+
+const range=
+getLast7DaysRange();
+
+try{
+
+let loadedQuery=
+supabaseClient
+.from("warehouse_activities")
+.select(`
+*,
+profiles (
+full_name
+)
+`)
+.gte("activity_date",range.from)
+.lte("activity_date",range.to)
+.order("activity_date",{ascending:false})
+.order("created_at",{ascending:false});
+
+let offloadedQuery=
+supabaseClient
+.from("offloaded_activities")
+.select(`
+*,
+profiles (
+full_name
+)
+`)
+.gte("activity_date",range.from)
+.lte("activity_date",range.to)
+.order("activity_date",{ascending:false})
+.order("created_at",{ascending:false});
+
+if(selectedWarehouseId){
+
+loadedQuery=
+loadedQuery.eq(
+"warehouse_id",
+selectedWarehouseId
+);
+
+offloadedQuery=
+offloadedQuery.eq(
+"warehouse_id",
+selectedWarehouseId
+);
+
+}
+
+const [
+{data:loaded,error:loadedError},
+{data:offloaded,error:offloadedError}
+]=await Promise.all([
+loadedQuery,
+offloadedQuery
+]);
+
+if(loadedError)
+throw loadedError;
+
+if(offloadedError)
+throw offloadedError;
+
+const all=[
+
+...(loaded||[]).map(r=>({
+...r,
+_type:"loaded"
+})),
+
+...(offloaded||[]).map(r=>({
+...r,
+_type:"offloaded"
+}))
+
+]
+.sort((a,b)=>
+String(b.activity_date)
+.localeCompare(
+String(a.activity_date)
+)||
+String(b.created_at||"")
+.localeCompare(
+String(a.created_at||"")
+)
+);
+
+body.innerHTML=
+all.length?
+all.map(r=>
+r._type==="loaded"?
+loadedRow(r):
+offloadedRow(r)
+).join(""):
+
+`
+<tr>
+<td
+colspan="${adminLoggedIn?16:15}"
+style="text-align:center;padding:25px">
+
+No activity found in the last 7 days.
+
+</td>
+</tr>
+`;
+
+}catch(e){
+
+body.innerHTML=
+`
+<tr>
+<td
+colspan="16"
+style="text-align:center;color:#a51d1d">
+
+${escapeHtml(e.message)}
+
+</td>
+</tr>
+`;
+
+}
+
+}
+
+
+/* =========================
+TOTALS
+========================= */
+
+async function loadTotals(){
+
+try{
+
+let lq=
+supabaseClient
+.from("warehouse_activities")
+.select("load_count");
+
+let oq=
+supabaseClient
+.from("offloaded_activities")
+.select("vehicle_count");
+
+if(selectedWarehouseId){
+
+lq=lq.eq(
+"warehouse_id",
+selectedWarehouseId
+);
+
+oq=oq.eq(
+"warehouse_id",
+selectedWarehouseId
+);
+
+}
+
+const [
+{data:loaded,error:le},
+{data:offloaded,error:oe}
+]=await Promise.all([
+lq,
+oq
+]);
+
+if(le)throw le;
+if(oe)throw oe;
+
+document
+.getElementById("loadedTotal")
+.textContent=
+(loaded||[])
+.reduce(
+(s,r)=>
+s+(Number(r.load_count)||0),
+0
+);
+
+document
+.getElementById("offloadedTotal")
+.textContent=
+(offloaded||[])
+.reduce(
+(s,r)=>
+s+(Number(r.vehicle_count)||0),
+0
+);
+
+}catch(e){
+
+console.error(e);
+
+}
+
+}
+
+
+/* =========================
+HUB SEARCH
+========================= */
+
+async function searchHubHistory(){
+
+const hub=
+document
+.getElementById("hubSearch")
+.value;
+
+const from=
+document
+.getElementById("hubFromDate")
+.value.trim();
+
+const to=
+document
+.getElementById("hubToDate")
+.value.trim();
+
+if(!hub){
+
+alert("Please select a hub.");
+
+return;
+
+}
+
+let query=
+supabaseClient
+.from("warehouse_activities")
+.select(`
+*,
+profiles (
+full_name
+)
+`)
+.eq("hub",hub)
+.order("activity_date",{ascending:false});
+
+if(selectedWarehouseId){
+
+query=query.eq(
+"warehouse_id",
+selectedWarehouseId
+);
+
+}
+
+if(from){
+
+const g=
+ethiopianToGregorian(from);
+
+if(!g){
+alert("Invalid From Date.");
+return;
+}
+
+query=query.gte(
+"activity_date",
+g
+);
+
+}
+
+if(to){
+
+const g=
+ethiopianToGregorian(to);
+
+if(!g){
+alert("Invalid To Date.");
+return;
+}
+
+query=query.lte(
+"activity_date",
+g
+);
+
+}
+
+const {data,error}=await query;
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+const body=
+document.getElementById(
+"historyResults"
+);
+
+body.innerHTML=
+data.length?
+data.map(r=>{
+
+const date=
+gregorianToEthiopian(
+String(r.activity_date)
+.substring(0,10)
+);
+
+return `
+<tr>
+
+<td>${escapeHtml(date)}</td>
+<td>Loaded</td>
+
+<td>${escapeHtml(r.start_time?.substring(0,5)||"-")}</td>
+
+<td>${escapeHtml(r.end_time?.substring(0,5)||"-")}</td>
+
+<td>${escapeHtml(r.vehicle||"-")}</td>
+
+<td>${escapeHtml(r.load_count||0)}</td>
+
+<td>${escapeHtml(r.hub||"-")}</td>
+
+<td>${escapeHtml(r.items||"-")}</td>
+
+<td>${escapeHtml(r.challenges||"-")}</td>
+
+<td>${escapeHtml(getCreatorName(r))}</td>
+
+<td>${escapeHtml(formatCreatedAt(r.created_at))}</td>
+
+${
+adminLoggedIn?
+`<td>${actionButtons(r.id,"loaded")}</td>`:
+""
+}
+
+</tr>
+`;
+
+}).join(""):
+
+`
+<tr>
+<td
+colspan="12"
+style="text-align:center">
+
+No records found.
+
+</td>
+</tr>
+`;
+
+}
+
+
+/* =========================
+DATE SEARCH
+========================= */
+
+async function searchLoadedByDate(){
+
+const from=
+document
+.getElementById("dateFrom")
+.value.trim();
+
+const to=
+document
+.getElementById("dateTo")
+.value.trim();
+
+if(!from&&!to){
+
+alert(
+"Enter at least one date."
+);
+
+return;
+
+}
+
+let query=
+supabaseClient
+.from("warehouse_activities")
+.select(`
+*,
+profiles (
+full_name
+)
+`)
+.order("activity_date",{ascending:false});
+
+if(selectedWarehouseId){
+
+query=query.eq(
+"warehouse_id",
+selectedWarehouseId
+);
+
+}
+
+if(from){
+
+const g=
+ethiopianToGregorian(from);
+
+if(!g){
+alert("Invalid From Date.");
+return;
+}
+
+query=query.gte(
+"activity_date",
+g
+);
+
+}
+
+if(to){
+
+const g=
+ethiopianToGregorian(to);
+
+if(!g){
+alert("Invalid To Date.");
+return;
+}
+
+query=query.lte(
+"activity_date",
+g
+);
+
+}
+
+const {data,error}=
+await query;
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+const body=
+document.getElementById(
+"dateSearchResults"
+);
+
+body.innerHTML=
+data.length?
+data.map(r=>{
+
+const date=
+gregorianToEthiopian(
+String(r.activity_date)
+.substring(0,10)
+);
+
+return `
+<tr>
+
+<td>${escapeHtml(date)}</td>
+<td>Loaded</td>
+
+<td>${escapeHtml(r.start_time?.substring(0,5)||"-")}</td>
+
+<td>${escapeHtml(r.end_time?.substring(0,5)||"-")}</td>
+
+<td>${escapeHtml(r.vehicle||"-")}</td>
+
+<td>${escapeHtml(r.load_count||0)}</td>
+
+<td>${escapeHtml(r.hub||"-")}</td>
+
+<td>${escapeHtml(r.items||"-")}</td>
+
+<td>${escapeHtml(r.challenges||"-")}</td>
+
+<td>${escapeHtml(getCreatorName(r))}</td>
+
+<td>${escapeHtml(formatCreatedAt(r.created_at))}</td>
+
+${
+adminLoggedIn?
+`<td>${actionButtons(r.id,"loaded")}</td>`:
+""
+}
+
+</tr>
+`;
+
+}).join(""):
+
+`
+<tr>
+<td colspan="12"
+style="text-align:center">
+
+No records found.
+
+</td>
+</tr>
+`;
+
+}
+
+async function searchOffloadedByDate(){
+
+const from=
+document
+.getElementById("offDateFrom")
+.value.trim();
+
+const to=
+document
+.getElementById("offDateTo")
+.value.trim();
+
+let query=
+supabaseClient
+.from("offloaded_activities")
+.select(`
+*,
+profiles (
+full_name
+)
+`)
+.order("activity_date",{ascending:false});
+
+if(selectedWarehouseId){
+
+query=query.eq(
+"warehouse_id",
+selectedWarehouseId
+);
+
+}
+
+if(from){
+
+const g=
+ethiopianToGregorian(from);
+
+if(!g){
+alert("Invalid From Date.");
+return;
+}
+
+query=query.gte(
+"activity_date",
+g
+);
+
+}
+
+if(to){
+
+const g=
+ethiopianToGregorian(to);
+
+if(!g){
+alert("Invalid To Date.");
+return;
+}
+
+query=query.lte(
+"activity_date",
+g
+);
+
+}
+
+const {data,error}=
+await query;
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+const body=
+document.getElementById(
+"offDateResults"
+);
+
+body.innerHTML=
+data.length?
+data.map(r=>{
+
+const date=
+gregorianToEthiopian(
+String(r.activity_date)
+.substring(0,10)
+);
+
+return `
+<tr>
+
+<td>${escapeHtml(date)}</td>
+
+<td>${escapeHtml(r.source_origin||"-")}</td>
+
+<td>${escapeHtml(r.mode_of_transport||"-")}</td>
+
+<td>${escapeHtml(r.vehicle||"-")}</td>
+
+<td>${escapeHtml(r.vehicle_count||0)}</td>
+
+<td>${escapeHtml(r.bill_of_loading_awb||"-")}</td>
+
+<td>${escapeHtml(r.inbound_number||"-")}</td>
+
+<td>${escapeHtml(r.items||"-")}</td>
+
+<td>${escapeHtml(r.challenges||"-")}</td>
+
+<td>${escapeHtml(getCreatorName(r))}</td>
+
+<td>${escapeHtml(formatCreatedAt(r.created_at))}</td>
+
+${
+adminLoggedIn?
+`<td>${actionButtons(r.id,"offloaded")}</td>`:
+""
+}
+
+</tr>
+`;
+
+}).join(""):
+
+`
+<tr>
+<td colspan="12"
+style="text-align:center">
+
+No records found.
+
+</td>
+</tr>
+`;
+
+}
+
+
+/* =========================
+DAILY LOADED ROW
+========================= */
+
+function addDailyRow(data={}){
+
+const tr=
+document.createElement("tr");
+
+tr.className=
+"daily-entry-row";
+
+tr.innerHTML=`
+
+<td>
+
+<select class="row-hub">
+
+<option value="">
+Select Hub
+</option>
+
+${createOptions(HUBS)}
+
+</select>
+
+</td>
+
+<td>
+
+<select class="row-vehicle">
+
+<option value="">
+Select Vehicle
+</option>
+
+${createOptions(VEHICLES)}
+
+</select>
+
+</td>
+
+<td>
+
+<input
+type="number"
+class="row-count"
+min="1"
+value="${data.load_count||1}">
+
+</td>
+
+<td>
+
+<input
+class="row-items"
+type="text"
+placeholder="Items">
+
+</td>
+
+<td>
+
+<input
+class="row-challenge"
+type="text"
+placeholder="Challenge">
+
+</td>
+
+<td>
+
+<button
+class="remove-row-button"
+type="button">
+
+🗑️
+
+</button>
+
+</td>
+`;
+
+document
+.getElementById("dailyRows")
+.appendChild(tr);
+
+tr.querySelector(".row-hub").value=
+data.hub||"";
+
+tr.querySelector(".row-vehicle").value=
+data.vehicle||"";
+
+tr.querySelector(".row-items").value=
+data.items==="-"?
+"":
+data.items||"";
+
+tr.querySelector(".row-challenge").value=
+data.challenges==="-"?
+"":
+data.challenges||"";
+
+tr
+.querySelector(".remove-row-button")
+.onclick=()=>{
+
+tr.remove();
+updateVehicleTotal();
+
+};
+
+updateVehicleTotal();
+
+}
+
+function clearRows(){
+
+document
+.getElementById("dailyRows")
+.innerHTML="";
+
+addDailyRow();
+
+}
+
+function updateVehicleTotal(){
+
+let total=0;
+
+document
+.querySelectorAll(".daily-entry-row")
+.forEach(row=>{
+
+total+=Number(
+row.querySelector(".row-count").value
+)||0;
+
+});
+
+document
+.getElementById("vehicleTotal")
+.textContent=total;
+
+}
+
+function getRows(){
+
+return [
+...document.querySelectorAll(
+".daily-entry-row"
+)
+].map(row=>({
+
+hub:
+row.querySelector(".row-hub").value,
+
+vehicle:
+row.querySelector(".row-vehicle").value,
+
+load_count:
+Number(
+row.querySelector(".row-count").value
+)||1,
+
+items:
+row.querySelector(".row-items")
+.value.trim()||"-",
+
+challenges:
+row.querySelector(".row-challenge")
+.value.trim()||"-"
+
+}));
+
+}
+
+
+/* =========================
+SAVE LOADED
+========================= */
+
+async function saveLoaded(){
+
+if(!await isLoggedIn()){
+
+msg(
+"Please login first.",
+"error"
+);
+
+return;
+
+}
+
+if(!currentUserProfile?.warehouse_id){
+
+msg(
+"Your account is not assigned to a warehouse.",
+"error"
+);
+
+return;
+
+}
+
+const eth=
+document
+.getElementById("activityDate")
+.value.trim();
+
+const date=
+ethiopianToGregorian(eth);
+
+if(!date){
+
+msg(
+"Invalid date.",
+"error"
+);
+
+return;
+
+}
+
+const rows=getRows();
+
+if(!rows.length){
+
+msg(
+"Please add at least one row.",
+"error"
+);
+
+return;
+
+}
+
+for(let i=0;i<rows.length;i++){
+
+if(!rows[i].hub){
+
+msg(
+`Select hub for row ${i+1}.`,
+"error"
+);
+
+return;
+
+}
+
+if(!rows[i].vehicle){
+
+msg(
+`Select vehicle for row ${i+1}.`,
+"error"
+);
+
+return;
+
+}
+
+}
+
+const startTime=
+document
+.getElementById("startTime")
+.value||null;
+
+const endTime=
+document
+.getElementById("endTime")
+.value||null;
+
+if(
+startTime&&
+endTime&&
+startTime>endTime
+){
+
+msg(
+"Ending time cannot be earlier than starting time.",
+"error"
+);
+
+return;
+
+}
+
+const common={
+
+warehouse_id:
+currentUserProfile.warehouse_id,
+
+activity_date:
+date,
+
+activity_type:
+"Loaded",
+
+start_time:
+startTime,
+
+end_time:
+endTime,
+
+created_by:
+currentUser.id,
+
+updated_at:
+new Date().toISOString()
+
+};
+
+const button=
+document.getElementById(
+"saveLoadedButton"
+);
+
+button.disabled=true;
+
+try{
+
+if(
+editingId&&
+editingType==="loaded"
+){
+
+const row=rows[0];
+
+const {error}=
+await supabaseClient
+.from("warehouse_activities")
+.update({
+...common,
+...row
+})
+.eq("id",editingId);
+
+if(error)
+throw error;
+
+msg(
+"Loaded activity updated successfully! ✅",
+"success"
+);
+
+}else{
+
+const records=
+rows.map(row=>({
+...common,
+...row
+}));
+
+const {error}=
+await supabaseClient
+.from("warehouse_activities")
+.insert(records);
+
+if(error)
+throw error;
+
+msg(
+"Loaded activity saved successfully! ✅",
+"success"
+);
+
+}
+
+cancelLoadedEdit();
+
+await refreshAllData();
+
+}catch(e){
+
+msg(
+e.message,
+"error"
+);
+
+}finally{
+
+button.disabled=false;
+
+button.textContent=
+"SAVE LOADED ACTIVITY";
+
+}
+
+}
+
+
+/* =========================
+SAVE OFFLOADED
+========================= */
+
+function resetOffloadedForm(){
+
+document
+.getElementById("offActivityDate")
+.value=
+getTodayEthiopian();
+
+document
+.getElementById("offSourceOrigin")
+.value="";
+
+document
+.getElementById("offMode")
+.value="";
+
+document
+.getElementById("offVehicle")
+.value="";
+
+document
+.getElementById("offVehicleCount")
+.value=1;
+
+document
+.getElementById("offBillAwb")
+.value="";
+
+document
+.getElementById("offInboundNumber")
+.value="";
+
+document
+.getElementById("offItems")
+.value="";
+
+document
+.getElementById("offChallenges")
+.value="";
+
+}
+
+async function saveOffloaded(){
+
+if(!await isLoggedIn()){
+
+msg(
+"Please login first.",
+"error"
+);
+
+return;
+
+}
+
+if(!currentUserProfile?.warehouse_id){
+
+msg(
+"Your account is not assigned to a warehouse.",
+"error"
+);
+
+return;
+
+}
+
+const date=
+ethiopianToGregorian(
+document
+.getElementById("offActivityDate")
+.value.trim()
+);
+
+if(!date){
+
+msg(
+"Invalid date.",
+"error"
+);
+
+return;
+
+}
+
+const source=
+document
+.getElementById("offSourceOrigin")
+.value.trim();
+
+const mode=
+document
+.getElementById("offMode")
+.value;
+
+const vehicle=
+document
+.getElementById("offVehicle")
+.value;
+
+if(
+!source||
+!mode||
+!vehicle
+){
+
+msg(
+"Please complete all required fields.",
+"error"
+);
+
+return;
+
+}
+
+const row={
+
+warehouse_id:
+currentUserProfile.warehouse_id,
+
+activity_date:
+date,
+
+activity_type:
+"Offloaded",
+
+source_origin:
+source,
+
+mode_of_transport:
+mode,
+
+vehicle,
+
+vehicle_count:
+Number(
+document
+.getElementById("offVehicleCount")
+.value
+)||1,
+
+bill_of_loading_awb:
+document
+.getElementById("offBillAwb")
+.value.trim()||"-",
+
+inbound_number:
+document
+.getElementById("offInboundNumber")
+.value.trim()||"-",
+
+items:
+document
+.getElementById("offItems")
+.value.trim()||"-",
+
+challenges:
+document
+.getElementById("offChallenges")
+.value.trim()||"-",
+
+created_by:
+currentUser.id,
+
+updated_at:
+new Date().toISOString()
+
+};
+
+const button=
+document.getElementById(
+"saveOffloadedButton"
+);
+
+button.disabled=true;
+
+try{
+
+if(
+editingId&&
+editingType==="offloaded"
+){
+
+const {error}=
+await supabaseClient
+.from("offloaded_activities")
+.update(row)
+.eq("id",editingId);
+
+if(error)
+throw error;
+
+msg(
+"Offloaded activity updated successfully! ✅",
+"success"
+);
+
+}else{
+
+const {error}=
+await supabaseClient
+.from("offloaded_activities")
+.insert(row);
+
+if(error)
+throw error;
+
+msg(
+"Offloaded activity saved successfully! ✅",
+"success"
+);
+
+}
+
+cancelOffEdit();
+
+await refreshAllData();
+
+}catch(e){
+
+msg(
+e.message,
+"error"
+);
+
+}finally{
+
+button.disabled=false;
+
+button.textContent=
+"SAVE OFFLOADED ACTIVITY";
+
+}
+
+}
+
+
+/* =========================
+SUPER ADMIN WAREHOUSES
+========================= */
+
+async function loadWarehouseManagement(){
+
+if(!isSuperAdmin())
+return;
+
+const body=
+document.getElementById(
+"warehouseManagementRows"
+);
+
+body.innerHTML=
+warehouses.map(w=>`
+
+<tr>
+
+<td>
+${escapeHtml(w.warehouse_name)}
+</td>
+
+<td>
+${w.is_active===false?
+"Inactive":
+"Active"}
+</td>
+
+<td>
+
+<button
+class="delete-button"
+type="button"
+onclick="removeWarehouse('${w.id}')">
+
+🗑️ Remove
+
+</button>
+
+</td>
+
+</tr>
+
+`).join("");
+
+}
+
+async function addWarehouse(){
+
+if(!isSuperAdmin())return;
+
+const name=
+document
+.getElementById("newWarehouseName")
+.value.trim();
+
+if(!name){
+
+alert(
+"Enter warehouse name."
+);
+
+return;
+
+}
+
+const {error}=
+await supabaseClient
+.from("warehouses")
+.insert({
+warehouse_name:name,
+is_active:true
+});
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+document
+.getElementById("newWarehouseName")
+.value="";
+
+await loadWarehouses();
+
+await loadWarehouseManagement();
+
+alert(
+"Warehouse added successfully."
+);
+
+}
+
+async function removeWarehouse(id){
+
+if(!isSuperAdmin())
+return;
+
+if(!confirm(
+"Remove this warehouse?"
+))return;
+
+const {error}=
+await supabaseClient
+.from("warehouses")
+.update({
+is_active:false
+})
+.eq("id",id);
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+await loadWarehouses();
+
+await loadWarehouseManagement();
+
+}
+
+
+/* =========================
+SUPER ADMIN ADMINS
+========================= */
+
+async function loadAdminManagement(){
+
+if(!isSuperAdmin())
+return;
+
+const {data,error}=
+await supabaseClient
+.from("profiles")
+.select(`
+id,
+full_name,
+role,
+is_active,
+warehouse_id,
+warehouses (
+warehouse_name
+)
+`)
+.order("full_name");
+
+if(error){
+console.error(error);
+return;
+}
+
+const warehouseSelect=
+document.getElementById("newAdminWarehouse");
+
+if(warehouseSelect){
+const current=warehouseSelect.value;
+warehouseSelect.innerHTML=
+`<option value="">Select Warehouse</option>`+
+warehouses
+.filter(w=>w.is_active!==false)
+.map(w=>`<option value="${escapeHtml(w.id)}">${escapeHtml(w.warehouse_name)}</option>`)
+.join("");
+warehouseSelect.value=current;
+}
+
+const body=
+document.getElementById("adminManagementRows");
+
+body.innerHTML=
+(data||[])
+.map(p=>`
+<tr>
+<td>${escapeHtml(p.full_name||"-")}</td>
+<td>${escapeHtml(p.role||"admin")}</td>
+<td>${escapeHtml(p.warehouses?.warehouse_name||"-")}</td>
+<td>${p.is_active===false?"Inactive":"Active"}</td>
+<td>
+${p.role==="super_admin"?
+"":`
+<button class="edit-button" type="button"
+onclick="toggleAdminStatus('${p.id}',${p.is_active===false?'true':'false'})">
+${p.is_active===false?"Activate":"Deactivate"}
+</button>
+<button class="delete-button" type="button"
+onclick="removeAdmin('${p.id}')">
+🗑️ Remove
+</button>`}
+</td>
+</tr>
+`)
+.join("");
+
+}
+
+function adminManagementMsg(text,type){
+const box=document.getElementById("adminManagementMessage");
+if(!box)return;
+box.textContent=text;
+box.className="message "+type;
+}
+
+async function addAdmin(){
+
+if(!isSuperAdmin())return;
+
+const name=document.getElementById("newAdminName").value.trim();
+const email=document.getElementById("newAdminEmail").value.trim();
+const password=document.getElementById("newAdminPassword").value;
+const role=document.getElementById("newAdminRole").value;
+const warehouseId=document.getElementById("newAdminWarehouse").value||null;
+const button=document.getElementById("addAdminButton");
+
+if(!name||!email||!password){
+adminManagementMsg("Please enter name, email and password.","error");
+return;
+}
+
+if(password.length<6){
+adminManagementMsg("Password must be at least 6 characters.","error");
+return;
+}
+
+if(role!=="super_admin"&&!warehouseId){
+adminManagementMsg("Please select a warehouse for the admin.","error");
+return;
+}
+
+button.disabled=true;
+button.textContent="ADDING ADMIN...";
+
+try{
+
+const {data:signUpData,error:signUpError}=
+await supabaseClient.auth.signUp({
+email,
+password,
+options:{
+emailRedirectTo:window.location.origin+window.location.pathname
+}
+});
+
+if(signUpError)throw signUpError;
+
+const newUser=signUpData?.user;
+if(!newUser)throw new Error("Supabase did not return the new admin user.");
+
+const {error:profileError}=
+await supabaseClient
+.from("profiles")
+.insert({
+id:newUser.id,
+full_name:name,
+role,
+warehouse_id:warehouseId,
+is_active:true
+});
+
+if(profileError){
+const msgText=profileError.message||"Profile creation failed.";
+if(msgText.toLowerCase().includes("duplicate")){
+throw new Error("This email already has an admin profile.");
+}
+throw profileError;
+}
+
+document.getElementById("newAdminName").value="";
+document.getElementById("newAdminEmail").value="";
+document.getElementById("newAdminPassword").value="";
+document.getElementById("newAdminRole").value="admin";
+document.getElementById("newAdminWarehouse").value="";
+
+adminManagementMsg(
+"Admin added successfully. If email confirmation is enabled in Supabase, the new admin must confirm their email before signing in.",
+"success"
+);
+
+await loadAdminManagement();
+
+}catch(e){
+adminManagementMsg("Failed to add admin: "+e.message,"error");
+
+}finally{
+button.disabled=false;
+button.textContent="➕ ADD ADMIN";
+}
+
+}
+
+async function removeAdmin(id){
+
+if(!isSuperAdmin())return;
+
+if(!confirm("Remove this admin profile? The Supabase login account will not be deleted automatically."))return;
+
+const {error}=
+await supabaseClient
+.from("profiles")
+.delete()
+.eq("id",id);
+
+if(error){
+alert(error.message);
+return;
+}
+
+await loadAdminManagement();
+
+}
+
+async function toggleAdminStatus(id,status){
+
+if(!isSuperAdmin())return;
+
+const {error}=
+await supabaseClient
+.from("profiles")
+.update({is_active:status})
+.eq("id",id);
+
+if(error){
+alert(error.message);
+return;
+}
+
+await loadAdminManagement();
+
+}
+
+function toggleNewAdminPassword(){
+const input=document.getElementById("newAdminPassword");
+const button=document.getElementById("toggleNewAdminPassword");
+const show=input.type==="password";
+input.type=show?"text":"password";
+button.textContent=show?"🙈 Hide":"👁 Show";
+}
+
+
+/* =========================
+EDIT / DELETE ACTIVITIES
+========================= */
+
+async function editLoaded(id){
+
+if(!adminLoggedIn)return;
+
+const {data,error}=
+await supabaseClient
+.from("warehouse_activities")
+.select("*")
+.eq("id",id)
+.single();
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+editingId=id;
+editingType="loaded";
+
+document
+.getElementById("activityDate")
+.value=
+gregorianToEthiopian(
+String(data.activity_date||"")
+.substring(0,10)
+);
+
+document
+.getElementById("startTime")
+.value=
+data.start_time?
+String(data.start_time).substring(0,5):
+"";
+
+document
+.getElementById("endTime")
+.value=
+data.end_time?
+String(data.end_time).substring(0,5):
+"";
+
+document
+.getElementById("dailyRows")
+.innerHTML="";
+
+addDailyRow(data);
+
+document
+.getElementById("saveLoadedButton")
+.textContent=
+"UPDATE LOADED ACTIVITY";
+
+document
+.getElementById("cancelLoadedEditButton")
+.style.display="block";
+
+switchEntry("loaded");
+
+document
+.getElementById("adminActivitySection")
+.scrollIntoView({
+behavior:"smooth"
+});
+
+}
+
+async function editOffloaded(id){
+
+if(!adminLoggedIn)return;
+
+const {data,error}=
+await supabaseClient
+.from("offloaded_activities")
+.select("*")
+.eq("id",id)
+.single();
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+editingId=id;
+editingType="offloaded";
+
+document
+.getElementById("offActivityDate")
+.value=
+gregorianToEthiopian(
+String(data.activity_date||"")
+.substring(0,10)
+);
+
+document
+.getElementById("offSourceOrigin")
+.value=data.source_origin||"";
+
+document
+.getElementById("offMode")
+.value=data.mode_of_transport||"";
+
+document
+.getElementById("offVehicle")
+.value=data.vehicle||"";
+
+document
+.getElementById("offVehicleCount")
+.value=Number(data.vehicle_count)||1;
+
+document
+.getElementById("offBillAwb")
+.value=
+data.bill_of_loading_awb==="-"?
+"":
+data.bill_of_loading_awb||"";
+
+document
+.getElementById("offInboundNumber")
+.value=
+data.inbound_number==="-"?
+"":
+data.inbound_number||"";
+
+document
+.getElementById("offItems")
+.value=
+data.items==="-"?
+"":
+data.items||"";
+
+document
+.getElementById("offChallenges")
+.value=
+data.challenges==="-"?
+"":
+data.challenges||"";
+
+document
+.getElementById("saveOffloadedButton")
+.textContent=
+"UPDATE OFFLOADED ACTIVITY";
+
+document
+.getElementById("cancelOffEditButton")
+.style.display="block";
+
+switchEntry("offloaded");
+
+document
+.getElementById("adminActivitySection")
+.scrollIntoView({
+behavior:"smooth"
+});
+
+}
+
+async function deleteLoaded(id){
+
+if(!adminLoggedIn)return;
+
+if(!confirm(
+"Delete this loaded activity?"
+))return;
+
+const {error}=
+await supabaseClient
+.from("warehouse_activities")
+.delete()
+.eq("id",id);
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+if(editingId===id)
+cancelLoadedEdit();
+
+await refreshAllData();
+
+}
+
+async function deleteOffloaded(id){
+
+if(!adminLoggedIn)return;
+
+if(!confirm(
+"Delete this offloaded activity?"
+))return;
+
+const {error}=
+await supabaseClient
+.from("offloaded_activities")
+.delete()
+.eq("id",id);
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+if(editingId===id)
+cancelOffEdit();
+
+await refreshAllData();
+
+}
+
+function cancelLoadedEdit(){
+
+editingId=null;
+editingType=null;
+
+document
+.getElementById("saveLoadedButton")
+.textContent=
+"SAVE LOADED ACTIVITY";
+
+document
+.getElementById("cancelLoadedEditButton")
+.style.display="none";
+
+document
+.getElementById("activityDate")
+.value=
+getTodayEthiopian();
+
+document
+.getElementById("startTime")
+.value="";
+
+document
+.getElementById("endTime")
+.value="";
+
+clearRows();
+
+}
+
+function cancelOffEdit(){
+
+editingId=null;
+editingType=null;
+
+document
+.getElementById("saveOffloadedButton")
+.textContent=
+"SAVE OFFLOADED ACTIVITY";
+
+document
+.getElementById("cancelOffEditButton")
+.style.display="none";
+
+resetOffloadedForm();
+
+}
+
+/* =========================
+REFRESH
+========================= */
+
+async function refreshAllData(){
+
+await Promise.all([
+
+loadRecentActivity(),
+
+loadTotals()
+
+]);
+
+}
+
+
+/* =========================
+ENTRY SWITCH
+========================= */
+
+function switchEntry(type){
+
+const loaded=
+type==="loaded";
+
+document
+.getElementById("loadedEntryPanel")
+.classList.toggle(
+"hidden",
+!loaded
+);
+
+document
+.getElementById("offloadedEntryPanel")
+.classList.toggle(
+"hidden",
+loaded
+);
+
+document
+.getElementById("loadedEntryTab")
+.classList.toggle(
+"active",
+loaded
+);
+
+document
+.getElementById("offloadedEntryTab")
+.classList.toggle(
+"active",
+!loaded
+);
+
+}
+
+
+/* =========================
+PASSWORD RECOVERY
+========================= */
+
+function resetPasswordMsg(text,color){
+
+const b=
+document.getElementById(
+"resetPasswordMessage"
+);
+
+b.textContent=text;
+b.style.color=color||"";
+
+}
+
+async function sendPasswordRecovery(){
+
+const email=
+document
+.getElementById("adminEmail")
+.value
+.trim();
+
+if(!email){
+
+loginMsg(
+"Enter your email first, then press Forgot Password.",
+"#a51d1d"
+);
+
+return;
+
+}
+
+const redirectTo=
+window.location.origin+
+window.location.pathname;
+
+const {error}=
+await supabaseClient
+.auth
+.resetPasswordForEmail(
+email,
+{redirectTo}
+);
+
+if(error){
+
+loginMsg(
+error.message,
+"#a51d1d"
+);
+
+return;
+
+}
+
+loginMsg(
+"Password reset link sent to your email.",
+"#176b36"
+);
+
+}
+
+async function updateRecoveredPassword(){
+
+const password=
+document
+.getElementById("newPassword")
+.value;
+
+const confirmPassword=
+document
+.getElementById("confirmNewPassword")
+.value;
+
+if(!password||password.length<6){
+
+resetPasswordMsg(
+"Password must contain at least 6 characters.",
+"#a51d1d"
+);
+
+return;
+
+}
+
+if(password!==confirmPassword){
+
+resetPasswordMsg(
+"Passwords do not match.",
+"#a51d1d"
+);
+
+return;
+
+}
+
+const {error}=
+await supabaseClient
+.auth
+.updateUser({
+password
+});
+
+if(error){
+
+resetPasswordMsg(
+error.message,
+"#a51d1d"
+);
+
+return;
+
+}
+
+resetPasswordMsg(
+"Password updated successfully. You can now log in.",
+"#176b36"
+);
+
+setTimeout(()=>{
+
+document
+.getElementById("resetPasswordBox")
+.style.display="none";
+
+document
+.getElementById("adminLoginBox")
+.style.display="block";
+
+},1200);
+
+}
+
+supabaseClient.auth.onAuthStateChange(
+(event,session)=>{
+
+if(
+event==="PASSWORD_RECOVERY"
+){
+
+document
+.getElementById("adminLoginBox")
+.style.display="none";
+
+document
+.getElementById("resetPasswordBox")
+.style.display="block";
+
+}
+
+}
+);
+
+/* =========================
+INITIALIZE
+========================= */
+
+async function initializeDashboard(){
+
+document
+.getElementById("hubSearch")
+.insertAdjacentHTML(
+"beforeend",
+createOptions(HUBS)
+);
+
+document
+.getElementById("activityDate")
+.value=
+getTodayEthiopian();
+
+document
+.getElementById("offActivityDate")
+.value=
+getTodayEthiopian();
+
+clearRows();
+
+document
+.getElementById("adminLoginButton")
+.onclick=
+toggleLogin;
+
+document
+.getElementById("loginButton")
+.onclick=
+adminLogin;
+
+document
+.getElementById("cancelLoginButton")
+.onclick=()=>{
+
+document
+.getElementById("adminLoginBox")
+.style.display="none";
+
+};
+
+document
+.getElementById("forgotPasswordButton")
+.onclick=
+sendPasswordRecovery;
+
+document
+.getElementById("updatePasswordButton")
+.onclick=
+updateRecoveredPassword;
+
+document
+.getElementById("applyWarehouseButton")
+.onclick=
+applyPublicWarehouse;
+
+document
+.getElementById("hubSearchButton")
+.onclick=
+searchHubHistory;
+
+document
+.getElementById("dateSearchButton")
+.onclick=
+searchLoadedByDate;
+
+document
+.getElementById("offDateSearchButton")
+.onclick=
+searchOffloadedByDate;
+
+document
+.getElementById("addRowButton")
+.onclick=
+()=>addDailyRow();
+
+document
+.getElementById("dailyRows")
+.addEventListener(
+"input",
+e=>{
+
+if(
+e.target.classList.contains(
+"row-count"
+)
+){
+
+updateVehicleTotal();
+
+}
+
+}
+);
+
+document
+.getElementById("saveLoadedButton")
+.onclick=
+saveLoaded;
+
+document
+.getElementById("saveOffloadedButton")
+.onclick=
+saveOffloaded;
+
+document
+.getElementById("cancelLoadedEditButton")
+.onclick=
+cancelLoadedEdit;
+
+document
+.getElementById("cancelOffEditButton")
+.onclick=
+cancelOffEdit;
+
+document
+.getElementById("loadedEntryTab")
+.onclick=
+()=>switchEntry("loaded");
+
+document
+.getElementById("offloadedEntryTab")
+.onclick=
+()=>switchEntry("offloaded");
+
+document
+.getElementById("addWarehouseButton")
+.onclick=
+addWarehouse;
+
+
+document
+.getElementById("addAdminButton")
+.onclick=
+addAdmin;
+
+document
+.getElementById("toggleNewAdminPassword")
+.onclick=
+toggleNewAdminPassword;
+
+try{
+
+await loadWarehouses();
+
+const {data}=
+await supabaseClient
+.auth
+.getSession();
+
+if(data?.session?.user){
+
+await loadCurrentUserProfile();
+
+showAdmin(
+data.session.user
+);
+
+if(isSuperAdmin()){
+
+await loadWarehouseManagement();
+
+await loadAdminManagement();
+
+}
+
+}else{
+
+showAdmin(null);
+
+}
+
+await refreshAllData();
+
+}catch(e){
+
+console.error(e);
+
+alert(
+"Dashboard initialization error: "+
+e.message
+);
+
+}
+
+}
+
+document.addEventListener(
+"DOMContentLoaded",
+initializeDashboard
+);
+
+</script>
+
+
+<script>
+
+if(
+"serviceWorker" in navigator&&
+location.protocol!=="file:"
+){
+
+window.addEventListener(
+"load",
+()=>navigator
+.serviceWorker
+.register("./service-worker.js")
+.catch(console.error)
+);
+
+}
+
+</script>
+
+</body>
+  </html>
