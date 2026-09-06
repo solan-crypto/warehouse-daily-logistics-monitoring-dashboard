@@ -991,6 +991,12 @@ Daily Activity Entry
 
 <section class="card">
 
+<div id="entryWarehouseBox" class="form-group" style="margin-bottom:18px">
+<label>Entering Data For Warehouse</label>
+<select id="entryWarehouseSelect"></select>
+<div id="entryWarehouseNotice" class="vehicle-total-box" style="margin-top:10px"></div>
+</div>
+
 <div class="activity-switch">
 
 <button
@@ -1939,6 +1945,14 @@ isSuperAdmin?
 "none";
 
 updateHeaders();
+
+if(user&&currentUserProfile){
+loadEntryWarehouseSelector();
+if(!isSuperAdmin()){
+const assigned=currentWarehouse?.warehouse_name||"assigned warehouse";
+setTimeout(()=>alert(`You are entering data for warehouse: ${assigned}`),100);
+}
+}
 
 }
 
@@ -3161,6 +3175,75 @@ row.querySelector(".row-challenge")
 
 
 /* =========================
+ENTRY WAREHOUSE
+========================= */
+
+function loadEntryWarehouseSelector(){
+
+const select=document.getElementById("entryWarehouseSelect");
+const notice=document.getElementById("entryWarehouseNotice");
+
+if(!select||!notice)return;
+
+const active=warehouses.filter(w=>w.is_active!==false);
+
+if(isSuperAdmin()){
+
+select.disabled=false;
+select.innerHTML=
+`<option value="">Select Warehouse</option>`+
+active.map(w=>`<option value="${escapeHtml(w.id)}">${escapeHtml(w.warehouse_name)}</option>`).join("");
+
+const currentId=currentWarehouse?.id||currentUserProfile?.warehouse_id||"";
+if(currentId&&active.some(w=>String(w.id)===String(currentId))){
+select.value=currentId;
+}
+
+updateEntryWarehouseNotice();
+
+}else{
+
+const assigned=currentWarehouse||active.find(w=>String(w.id)===String(currentUserProfile?.warehouse_id));
+
+select.innerHTML=assigned?
+`<option value="${escapeHtml(assigned.id)}">${escapeHtml(assigned.warehouse_name)}</option>`:
+`<option value="">No warehouse assigned</option>`;
+
+select.disabled=true;
+
+notice.textContent=assigned?
+`⚠️ You are entering data for: ${assigned.warehouse_name}`:
+"⚠️ Your account is not assigned to a warehouse.";
+
+}
+
+}
+
+function updateEntryWarehouseNotice(){
+
+const select=document.getElementById("entryWarehouseSelect");
+const notice=document.getElementById("entryWarehouseNotice");
+if(!select||!notice)return;
+
+const found=warehouses.find(w=>String(w.id)===String(select.value));
+
+notice.textContent=found?
+`⚠️ You are entering data for: ${found.warehouse_name}`:
+"⚠️ Please select the warehouse you are entering data for.";
+
+}
+
+function getEntryWarehouseId(){
+
+if(isSuperAdmin()){
+return document.getElementById("entryWarehouseSelect").value||null;
+}
+
+return currentUserProfile?.warehouse_id||null;
+
+}
+
+/* =========================
 SAVE LOADED
 ========================= */
 
@@ -3177,9 +3260,13 @@ return;
 
 }
 
-if(!currentUserProfile?.warehouse_id){
+const entryWarehouseId=getEntryWarehouseId();
+
+if(!entryWarehouseId){
 
 msg(
+isSuperAdmin()?
+"Please select the warehouse you are entering data for.":
 "Your account is not assigned to a warehouse.",
 "error"
 );
@@ -3274,7 +3361,7 @@ return;
 const common={
 
 warehouse_id:
-currentUserProfile.warehouse_id,
+entryWarehouseId,
 
 activity_date:
 date,
@@ -3433,9 +3520,13 @@ return;
 
 }
 
-if(!currentUserProfile?.warehouse_id){
+const entryWarehouseId=getEntryWarehouseId();
+
+if(!entryWarehouseId){
 
 msg(
+isSuperAdmin()?
+"Please select the warehouse you are entering data for.":
 "Your account is not assigned to a warehouse.",
 "error"
 );
@@ -3495,7 +3586,7 @@ return;
 const row={
 
 warehouse_id:
-currentUserProfile.warehouse_id,
+entryWarehouseId,
 
 activity_date:
 date,
@@ -4520,6 +4611,10 @@ document
 searchOffloadedByDate;
 
 document
+.getElementById("entryWarehouseSelect")
+.addEventListener("change",updateEntryWarehouseNotice);
+
+document
 .getElementById("addRowButton")
 .onclick=
 ()=>addDailyRow();
@@ -4592,6 +4687,7 @@ toggleNewAdminPassword;
 try{
 
 await loadWarehouses();
+loadEntryWarehouseSelector();
 
 const {data}=
 await supabaseClient
