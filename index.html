@@ -4254,7 +4254,95 @@ INITIALIZE
 ========================= */
 
 async function initializeDashboard(){
+document
+  .getElementById("updatePasswordButton")
+  .onclick =
+  updatePassword;
 
+
+document
+  .getElementById("toggleNewPassword")
+  .onclick =
+  ()=>{
+
+    const input =
+      document.getElementById(
+        "newPassword"
+      );
+
+    input.type =
+      input.type === "password"
+        ? "text"
+        : "password";
+
+  };
+
+
+document
+  .getElementById("toggleConfirmPassword")
+  .onclick =
+  ()=>{
+
+    const input =
+      document.getElementById(
+        "confirmNewPassword"
+      );
+
+    input.type =
+      input.type === "password"
+        ? "text"
+        : "password";
+
+  };
+
+
+supabaseClient
+  .auth
+  .onAuthStateChange(
+    (event, session)=>{
+
+      if(
+        event ===
+        "PASSWORD_RECOVERY"
+      ){
+
+        document
+          .getElementById(
+            "adminLoginBox"
+          )
+          .style.display =
+          "none";
+
+
+        document
+          .getElementById(
+            "passwordRecoveryBox"
+          )
+          .style.display =
+          "block";
+
+      }
+
+    }
+  );
+  document
+.getElementById("togglePasswordButton")
+.onclick=
+togglePasswordVisibility;
+  document
+.getElementById("adminPassword")
+.addEventListener(
+"keydown",
+event=>{
+
+  if(event.key==="Enter"){
+
+    adminLogin();
+
+  }
+
+}
+);
 document
 .getElementById("hubSearch")
 .insertAdjacentHTML(
