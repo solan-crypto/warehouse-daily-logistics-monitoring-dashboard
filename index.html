@@ -1856,207 +1856,397 @@ LOGIN
 
 function showAdmin(user){
 
-adminLoggedIn=!!user;
+  adminLoggedIn=!!user;
 
-document
-.getElementById("adminActivitySection")
-.style.display=
-user?"block":"none";
+  document
+  .getElementById("adminActivitySection")
+  .style.display=
+  user?"block":"none";
 
-const btn=
-document.getElementById(
-"adminLoginButton"
-);
 
-btn.textContent=
-user?
-"🔓 Logout":
-"🔐 Admin Login";
+  const btn=
+  document.getElementById(
+  "adminLoginButton"
+  );
 
-const isSuperAdmin=
-currentUserProfile?.role===
-"super_admin";
+  btn.textContent=
+  user?
+  "🔓 Logout":
+  "🔐 Admin Login";
 
-document
-.getElementById("superAdminSection")
-.style.display=
-isSuperAdmin?
-"block":
-"none";
 
-updateHeaders();
+  const isSuperAdmin=
+  currentUserProfile?.role===
+  "super_admin";
+
+
+  document
+  .getElementById("superAdminSection")
+  .style.display=
+  isSuperAdmin?
+  "block":
+  "none";
+
+
+  updateHeaders();
 
 }
+
 
 function updateHeaders(){
 
-const display=
-adminLoggedIn?
-"table-cell":
-"none";
+  const display=
+  adminLoggedIn?
+  "table-cell":
+  "none";
 
-[
-"recentActionsHeader",
-"historyActionsHeader",
-"dateActionsHeader",
-"offDateActionsHeader"
-].forEach(id=>{
 
-document
-.getElementById(id)
-.style.display=
-display;
+  [
+  "recentActionsHeader",
+  "historyActionsHeader",
+  "dateActionsHeader",
+  "offDateActionsHeader"
+  ]
+  .forEach(id=>{
 
-});
+    const element=
+    document.getElementById(id);
+
+    if(element){
+
+      element.style.display=
+      display;
+
+    }
+
+  });
 
 }
+
 
 function toggleLogin(){
 
-if(adminLoggedIn){
+  if(adminLoggedIn){
 
-adminLogout();
+    adminLogout();
 
-return;
+    return;
+
+  }
+
+
+  const box=
+  document.getElementById(
+  "adminLoginBox"
+  );
+
+
+  if(box.style.display==="block"){
+
+    box.style.display="none";
+
+  }else{
+
+    box.style.display="block";
+
+    loginMsg("");
+
+  }
 
 }
 
-const box=
-document.getElementById(
-"adminLoginBox"
-);
-
-box.style.display=
-box.style.display==="block"?
-"none":
-"block";
-
-}
 
 async function adminLogin(){
 
-const email=
-document
-.getElementById("adminEmail")
-.value
-.trim();
+  const email=
+  document
+  .getElementById("adminEmail")
+  .value
+  .trim()
+  .toLowerCase();
 
-const password=
-document
-.getElementById("adminPassword")
-.value;
 
-if(!email||!password){
+  const password=
+  document
+  .getElementById("adminPassword")
+  .value;
 
-loginMsg(
-"Please enter email and password.",
-"#a51d1d"
-);
 
-return;
+  if(!email||!password){
+
+    loginMsg(
+    "Please enter your email and password.",
+    "#a51d1d"
+    );
+
+    return;
+
+  }
+
+
+  const btn=
+  document.getElementById(
+  "loginButton"
+  );
+
+
+  btn.disabled=true;
+
+  btn.textContent=
+  "LOGGING IN...";
+
+
+  loginMsg(
+  "Checking login...",
+  "#123a91"
+  );
+
+
+  try{
+
+
+    /*
+    Clear any old session first.
+    This helps prevent an old invalid
+    session from interfering with login.
+    */
+
+    await supabaseClient
+    .auth
+    .signOut();
+
+
+    const {data,error}=
+    await supabaseClient
+    .auth
+    .signInWithPassword({
+
+      email:email,
+
+      password:password
+
+    });
+
+
+    if(error){
+
+      throw error;
+
+    }
+
+
+    if(!data?.session?.user){
+
+      throw new Error(
+      "Login was successful, but no user session was created."
+      );
+
+    }
+
+
+    /*
+    Save current user
+    */
+
+    currentUser=
+    data.session.user;
+
+
+    /*
+    Load the user's profile
+    */
+
+    await loadCurrentUserProfile();
+
+
+    /*
+    Login successful
+    */
+
+    showAdmin(
+    currentUser
+    );
+
+
+    /*
+    Hide login box
+    */
+
+    document
+    .getElementById("adminLoginBox")
+    .style.display=
+    "none";
+
+
+    /*
+    Clear password for security
+    */
+
+    document
+    .getElementById("adminPassword")
+    .value=
+    "";
+
+
+    loginMsg("");
+
+
+    /*
+    Refresh dashboard
+    */
+
+    await refreshAllData();
+
+
+    /*
+    Load super admin data
+    */
+
+    if(
+    currentUserProfile?.role===
+    "super_admin"
+    ){
+
+      await loadWarehouseManagement();
+
+      await loadAdminManagement();
+
+    }
+
+
+  }catch(e){
+
+
+    /*
+    Clear incorrect session
+    */
+
+    await supabaseClient
+    .auth
+    .signOut();
+
+
+    currentUser=null;
+
+    currentUserProfile=null;
+
+    currentWarehouse=null;
+
+    showAdmin(null);
+
+
+    let message=
+    e?.message||
+    "Unable to login.";
+
+
+    /*
+    Friendly Supabase messages
+    */
+
+    if(
+    message.toLowerCase()
+    .includes("invalid login credentials")
+    ){
+
+      message=
+      "Invalid email or password. Please check your login credentials.";
+
+    }
+
+
+    if(
+    message.toLowerCase()
+    .includes("email not confirmed")
+    ){
+
+      message=
+      "Your email address has not been confirmed.";
+
+    }
+
+
+    loginMsg(
+
+    "Login failed: "+message,
+
+    "#a51d1d"
+
+    );
+
+
+  }finally{
+
+
+    btn.disabled=false;
+
+    btn.textContent=
+    "🔓 LOGIN";
+
+
+  }
 
 }
 
-const btn=
-document.getElementById(
-"loginButton"
-);
-
-btn.disabled=true;
-btn.textContent="LOGGING IN...";
-
-try{
-
-const {data,error}=
-await supabaseClient
-.auth
-.signInWithPassword({
-email,
-password
-});
-
-if(error)throw error;
-
-if(!data?.user)
-throw new Error(
-"No valid user was returned."
-);
-
-await loadCurrentUserProfile();
-
-showAdmin(data.user);
-
-document
-.getElementById("adminLoginBox")
-.style.display="none";
-
-document
-.getElementById("adminPassword")
-.value="";
-
-await refreshAllData();
-
-if(
-currentUserProfile?.role===
-"super_admin"
-){
-
-await loadWarehouseManagement();
-await loadAdminManagement();
-
-}
-
-}catch(e){
-
-loginMsg(
-"Login failed: "+e.message,
-"#a51d1d"
-);
-
-}finally{
-
-btn.disabled=false;
-btn.textContent="🔓 LOGIN";
-
-}
-
-}
 
 async function adminLogout(){
 
-if(!confirm(
-"Do you want to logout?"
-))return;
+  if(
+  !confirm(
+  "Do you want to logout?"
+  )
+  )return;
 
-try{
 
-const {error}=
-await supabaseClient
-.auth
-.signOut();
+  try{
 
-if(error)throw error;
 
-currentUser=null;
-currentUserProfile=null;
+    const {error}=
+    await supabaseClient
+    .auth
+    .signOut();
 
-editingId=null;
-editingType=null;
 
-showAdmin(null);
+    if(error){
 
-await refreshAllData();
+      throw error;
 
-}catch(e){
+    }
 
-alert(
-"Logout failed: "+e.message
-);
 
-}
+    currentUser=null;
 
-}
+    currentUserProfile=null;
 
+    currentWarehouse=null;
+
+
+    editingId=null;
+
+    editingType=null;
+
+
+    showAdmin(null);
+
+
+    await refreshAllData();
+
+
+  }catch(e){
+
+
+    alert(
+
+    "Logout failed: "+
+
+    e.message
+
+    );
+
+
+  }
+
+  }
 
 /* =========================
 PERMISSIONS
