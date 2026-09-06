@@ -1933,14 +1933,14 @@ user?
 "🔓 Logout":
 "🔐 Admin Login";
 
-const isSuperAdmin=
+const isSuperAdminUser =
 currentUserProfile?.role===
 "super_admin";
 
 document
 .getElementById("superAdminSection")
 .style.display=
-isSuperAdmin?
+isSuperAdminUser?
 "block":
 "none";
 
