@@ -1767,86 +1767,162 @@ PROFILE
 ========================= */
 async function loadCurrentUserProfile(){
 
-  const { data: sessionData, error: sessionError } =
-    await supabaseClient.auth.getSession();
+  const {
+    data:sessionData,
+    error:sessionError
+  }=
+  await supabaseClient
+  .auth
+  .getSession();
 
-  if(sessionError) throw sessionError;
 
-  const user = sessionData?.session?.user;
+  if(sessionError){
+
+    throw sessionError;
+
+  }
+
+
+  const user=
+  sessionData?.session?.user;
+
 
   if(!user){
 
-    currentUser = null;
-    currentUserProfile = null;
-    currentWarehouse = null;
+    currentUser=null;
+
+    currentUserProfile=null;
+
+    currentWarehouse=null;
 
     return null;
+
   }
 
-  currentUser = user;
 
-  // Get profile only first
-  const { data: profiles, error: profileError } =
+  currentUser=user;
+
+
+  const {
+    data:profiles,
+    error:profileError
+  }=
+  await supabaseClient
+  .from("profiles")
+  .select(`
+    id,
+    full_name,
+    role,
+    warehouse_id,
+    is_active
+  `)
+  .eq(
+    "id",
+    user.id
+  )
+  .limit(1);
+
+
+  if(profileError){
+
+    throw profileError;
+
+  }
+
+
+  if(
+  !profiles||
+  profiles.length===0
+  ){
+
+    throw new Error(
+
+    "Your login account does not have a profile. Contact the Super Admin."
+
+    );
+
+  }
+
+
+  const profile=
+  profiles[0];
+
+
+  if(
+  profile.is_active===false
+  ){
+
     await supabaseClient
-      .from("profiles")
-      .select(`
-        id,
-        full_name,
-        role,
-        warehouse_id,
-        is_active
-      `)
-      .eq("id", user.id)
-      .limit(1);
+    .auth
+    .signOut();
 
-  if(profileError) throw profileError;
-
-  if(!profiles || profiles.length === 0){
 
     throw new Error(
-      "Your login account does not have a profile. Contact the Super Admin."
+
+    "Your account has been deactivated."
+
     );
+
   }
 
-  const profile = profiles[0];
 
-  if(!profile.is_active){
+  currentUserProfile=
+  profile;
 
-    await supabaseClient.auth.signOut();
 
-    throw new Error(
-      "Your account has been deactivated."
-    );
+  currentWarehouse=
+  null;
+
+
+  /*
+  Load assigned warehouse
+  */
+
+  if(
+  profile.warehouse_id
+  ){
+
+    const {
+      data:warehouse,
+      error:warehouseError
+    }=
+    await supabaseClient
+    .from("warehouses")
+    .select(`
+      id,
+      warehouse_name,
+      warehouse_code,
+      is_active
+    `)
+    .eq(
+      "id",
+      profile.warehouse_id
+    )
+    .limit(1);
+
+
+    if(warehouseError){
+
+      throw warehouseError;
+
+    }
+
+
+    if(
+    warehouse&&
+    warehouse.length>0
+    ){
+
+      currentWarehouse=
+      warehouse[0];
+
+    }
+
   }
 
-  currentUserProfile = profile;
-
-  currentWarehouse = null;
-
-  // Get warehouse separately only when the user has one
-  if(profile.warehouse_id){
-
-    const { data: warehouse, error: warehouseError } =
-      await supabaseClient
-        .from("warehouses")
-        .select(`
-          id,
-          warehouse_name,
-          warehouse_code,
-          is_active
-        `)
-        .eq("id", profile.warehouse_id)
-        .limit(1);
-
-    if(warehouseError) throw warehouseError;
-
-    currentWarehouse =
-      warehouse && warehouse.length
-        ? warehouse[0]
-        : null;
-  }
 
   return profile;
+
 }
 
 
