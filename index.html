@@ -467,11 +467,29 @@ placeholder="Enter admin email">
 </div>
 
 <div class="admin-input-group">
+
 <label>Password</label>
+
+<div class="password-wrapper">
+
 <input
 type="password"
 id="adminPassword"
-placeholder="Enter password">
+placeholder="Enter password"
+autocomplete="current-password">
+
+<button
+id="togglePasswordButton"
+type="button"
+class="toggle-password-button"
+aria-label="Show password">
+
+👁️
+
+</button>
+
+</div>
+
 </div>
 
 <button
