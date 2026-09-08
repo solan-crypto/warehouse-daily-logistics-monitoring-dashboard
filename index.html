@@ -2351,10 +2351,11 @@ let loadedQuery=
 supabaseClient
 .from("warehouse_activities")
 .select(`
-*,
-profiles (
-full_name
-)
+  *,
+  profiles!warehouse_activities_created_by_fkey (
+    full_name,
+    role
+  )
 `)
 .gte("activity_date",range.from)
 .lte("activity_date",range.to)
