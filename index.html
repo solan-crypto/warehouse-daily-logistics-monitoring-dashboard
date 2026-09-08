@@ -2351,20 +2351,14 @@ getLast7DaysRange();
 
 try{
 
-let loadedQuery=
-supabaseClient
-.from("warehouse_activities")
-.select(`
-*,
-profiles (
-full_name
-)
-`)
-.gte("activity_date",range.from)
-.lte("activity_date",range.to)
-.order("activity_date",{ascending:false})
-.order("created_at",{ascending:false});
-
+let loadedQuery =
+  supabaseClient
+    .from("warehouse_activities")
+    .select('*')
+    .gte("activity_date", range.from)
+    .lte("activity_date", range.to)
+    .order("activity_date", { ascending: false })
+    .order("created_at", { ascending: false });
 let offloadedQuery=
 supabaseClient
 .from("offloaded_activities")
