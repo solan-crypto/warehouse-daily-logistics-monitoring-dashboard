@@ -2337,64 +2337,130 @@ return {from,to:today};
 
 async function loadRecentActivity(){
 
-const body=
-document.getElementById(
-"recentActivity"
-);
+  const body =
+  document.getElementById(
+    "recentActivity"
+  );
 
-const range=
-getLast7DaysRange();
+  const range =
+  getLast7DaysRange();
 
-try{
-let loadedQuery =
-supabaseClient
-.from("warehouse_activities")
-.select("*")
-.gte("activity_date", range.from)
-.lte("activity_date", range.to)
-.order("activity_date", { ascending: false })
-.order("created_at", { ascending: false });
-let offloadedQuery=
-supabaseClient
-.let offloadedQuery =
-supabaseClient
-.from("offloaded_activities")
-.select("*")
-.gte("activity_date", range.from)
-.lte("activity_date", range.to)
-.order("activity_date", { ascending: false })
-.order("created_at", { ascending: false });
-if(selectedWarehouseId){
+  try{
 
-loadedQuery=
-loadedQuery.eq(
-"warehouse_id",
-selectedWarehouseId
-);
+    let loadedQuery =
+    supabaseClient
+    .from("warehouse_activities")
+    .select("*")
+    .gte("activity_date", range.from)
+    .lte("activity_date", range.to)
+    .order("activity_date", { ascending:false })
+    .order("created_at", { ascending:false });
 
-offloadedQuery=
-offloadedQuery.eq(
-"warehouse_id",
-selectedWarehouseId
-);
+    let offloadedQuery =
+    supabaseClient
+    .from("offloaded_activities")
+    .select("*")
+    .gte("activity_date", range.from)
+    .lte("activity_date", range.to)
+    .order("activity_date", { ascending:false })
+    .order("created_at", { ascending:false });
 
-}
+    if(selectedWarehouseId){
 
-const [
-{data:loaded,error:loadedError},
-{data:offloaded,error:offloadedError}
-]=await Promise.all([
-loadedQuery,
-offloadedQuery
-]);
+      loadedQuery =
+      loadedQuery.eq(
+        "warehouse_id",
+        selectedWarehouseId
+      );
 
-if(loadedError)
-throw loadedError;
+      offloadedQuery =
+      offloadedQuery.eq(
+        "warehouse_id",
+        selectedWarehouseId
+      );
 
-if(offloadedError)
-throw offloadedError;
+    }
 
-const all=[
+    const [
+      {data:loaded,error:loadedError},
+      {data:offloaded,error:offloadedError}
+    ] =
+    await Promise.all([
+      loadedQuery,
+      offloadedQuery
+    ]);
+
+    if(loadedError)
+    throw loadedError;
+
+    if(offloadedError)
+    throw offloadedError;
+
+    const all = [
+
+      ...(loaded || []).map(r => ({
+        ...r,
+        _type:"loaded"
+      })),
+
+      ...(offloaded || []).map(r => ({
+        ...r,
+        _type:"offloaded"
+      }))
+
+    ]
+    .sort((a,b) =>
+      String(b.activity_date)
+      .localeCompare(
+        String(a.activity_date)
+      ) ||
+      String(b.created_at || "")
+      .localeCompare(
+        String(a.created_at || "")
+      )
+    );
+
+    body.innerHTML =
+    all.length ?
+
+    all.map(r =>
+      r._type === "loaded" ?
+      loadedRow(r) :
+      offloadedRow(r)
+    ).join("")
+
+    :
+
+    `
+    <tr>
+      <td
+        colspan="${adminLoggedIn ? 16 : 15}"
+        style="text-align:center;padding:25px">
+
+        No activity found in the last 7 days.
+
+      </td>
+    </tr>
+    `;
+
+  }catch(e){
+
+    body.innerHTML =
+    `
+    <tr>
+      <td
+        colspan="16"
+        style="text-align:center;color:#a51d1d">
+
+        ${escapeHtml(e.message)}
+
+      </td>
+    </tr>
+    `;
+
+  }
+
+  }
 
 ...(loaded||[]).map(r=>({
 ...r,
@@ -2417,45 +2483,6 @@ String(b.created_at||"")
 String(a.created_at||"")
 )
 );
-
-body.innerHTML=
-all.length?
-all.map(r=>
-r._type==="loaded"?
-loadedRow(r):
-offloadedRow(r)
-).join(""):
-
-`
-<tr>
-<td
-colspan="${adminLoggedIn?16:15}"
-style="text-align:center;padding:25px">
-
-No activity found in the last 7 days.
-
-</td>
-</tr>
-`;
-
-}catch(e){
-
-body.innerHTML=
-`
-<tr>
-<td
-colspan="16"
-style="text-align:center;color:#a51d1d">
-
-${escapeHtml(e.message)}
-
-</td>
-</tr>
-`;
-
-}
-
-}
 
 
 /* =========================
