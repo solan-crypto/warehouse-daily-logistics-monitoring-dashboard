@@ -2196,13 +2196,38 @@ type==="loaded"?
 
 }
 
+async function attachCreatorNames(rows){
+
+if(!Array.isArray(rows)||!rows.length)return rows||[];
+
+const ids=[...new Set(rows.map(r=>r.created_by).filter(Boolean))];
+
+if(!ids.length)return rows;
+
+const {data:profiles,error}=await supabaseClient
+.from("profiles")
+.select("id,full_name")
+.in("id",ids);
+
+if(error){
+console.warn("Could not load creator names:",error.message);
+return rows;
+}
+
+const creatorMap=new Map(
+(profiles||[]).map(p=>[p.id,p.full_name||"-"])
+);
+
+return rows.map(r=>({
+...r,
+creator_name:creatorMap.get(r.created_by)||"-"
+}));
+
+}
+
 function getCreatorName(r){
 
-if(
-r.profiles?.full_name
-)return r.profiles.full_name;
-
-return "-";
+return r.creator_name||r.profiles?.full_name||"-";
 
 }
 
@@ -2351,22 +2376,23 @@ getLast7DaysRange();
 
 try{
 
-let loadedQuery =
-  supabaseClient
-    .from("warehouse_activities")
-    .select('*')
-    .gte("activity_date", range.from)
-    .lte("activity_date", range.to)
-    .order("activity_date", { ascending: false })
-    .order("created_at", { ascending: false });
-let offloadedQuery =
-  supabaseClient
-    .from("offloaded_activities")
-    .select("*")
-    .gte("activity_date", range.from)
-    .lte("activity_date", range.to)
-    .order("activity_date", { ascending: false })
-    .order("created_at", { ascending: false });
+let loadedQuery=
+supabaseClient
+.from("warehouse_activities")
+.select("*")
+.gte("activity_date",range.from)
+.lte("activity_date",range.to)
+.order("activity_date",{ascending:false})
+.order("created_at",{ascending:false});
+
+let offloadedQuery=
+supabaseClient
+.from("offloaded_activities")
+.select("*")
+.gte("activity_date",range.from)
+.lte("activity_date",range.to)
+.order("activity_date",{ascending:false})
+.order("created_at",{ascending:false});
 
 if(selectedWarehouseId){
 
@@ -2398,14 +2424,33 @@ throw loadedError;
 if(offloadedError)
 throw offloadedError;
 
+const creatorNamedRows=await attachCreatorNames([
+...(loaded||[]),
+...(offloaded||[])
+]);
+
+const creatorMap=new Map(
+creatorNamedRows.map(r=>[r.created_by,r.creator_name])
+);
+
+const loadedWithCreators=(loaded||[]).map(r=>({
+...r,
+creator_name:creatorMap.get(r.created_by)||"-"
+}));
+
+const offloadedWithCreators=(offloaded||[]).map(r=>({
+...r,
+creator_name:creatorMap.get(r.created_by)||"-"
+}));
+
 const all=[
 
-...(loaded||[]).map(r=>({
+...loadedWithCreators.map(r=>({
 ...r,
 _type:"loaded"
 })),
 
-...(offloaded||[]).map(r=>({
+...offloadedWithCreators.map(r=>({
 ...r,
 _type:"offloaded"
 }))
@@ -2566,12 +2611,7 @@ return;
 let query=
 supabaseClient
 .from("warehouse_activities")
-.select(`
-*,
-profiles (
-full_name
-)
-`)
+.select("*")
 .eq("hub",hub)
 .order("activity_date",{ascending:false});
 
@@ -2628,14 +2668,16 @@ return;
 
 }
 
+const rows=await attachCreatorNames(data||[]);
+
 const body=
 document.getElementById(
 "historyResults"
 );
 
 body.innerHTML=
-data.length?
-data.map(r=>{
+rows.length?
+rows.map(r=>{
 
 const date=
 gregorianToEthiopian(
@@ -2722,12 +2764,7 @@ return;
 let query=
 supabaseClient
 .from("warehouse_activities")
-.select(`
-*,
-profiles (
-full_name
-)
-`)
+.select("*")
 .order("activity_date",{ascending:false});
 
 if(selectedWarehouseId){
@@ -2784,14 +2821,16 @@ return;
 
 }
 
+const rows=await attachCreatorNames(data||[]);
+
 const body=
 document.getElementById(
 "dateSearchResults"
 );
 
 body.innerHTML=
-data.length?
-data.map(r=>{
+rows.length?
+rows.map(r=>{
 
 const date=
 gregorianToEthiopian(
@@ -2862,12 +2901,7 @@ document
 let query=
 supabaseClient
 .from("offloaded_activities")
-.select(`
-*,
-profiles (
-full_name
-)
-`)
+.select("*")
 .order("activity_date",{ascending:false});
 
 if(selectedWarehouseId){
@@ -2924,14 +2958,16 @@ return;
 
 }
 
+const rows=await attachCreatorNames(data||[]);
+
 const body=
 document.getElementById(
 "offDateResults"
 );
 
 body.innerHTML=
-data.length?
-data.map(r=>{
+rows.length?
+rows.map(r=>{
 
 const date=
 gregorianToEthiopian(
